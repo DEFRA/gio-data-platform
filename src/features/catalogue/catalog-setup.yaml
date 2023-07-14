@@ -54,6 +54,12 @@ extends:
         deploymentBranches:
           - '*'
         serviceConnection: AZD-CPR-DEV1
+      - name: 'DP_TST'
+        azureRegions:
+          primary: uksouth
+        deploymentBranches:
+          - '*'
+        serviceConnection: AZD-CPR-TST1
     scriptsList:   
      - displayName: 'Configure Collections and Permissions'
        scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
