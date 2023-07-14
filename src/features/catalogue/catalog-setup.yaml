@@ -77,7 +77,7 @@ extends:
        scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
        type: AzurePowerShell
        scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Collections" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'
-     - displayName: 'Configure Classifications'
-       scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureClassifications.ps1'
-       type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Classifications" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'       
+    # - displayName: 'Configure Classifications'
+    #   scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureClassifications.ps1'
+    #   type: AzurePowerShell
+    #   scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Classifications" -Environment $(scriptEnvironment) -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV1001"'       
