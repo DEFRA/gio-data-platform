@@ -18,7 +18,6 @@ parameters:
     values:
       - uksouth
 
-# PROJECT SPECIFIC (CHANGE ME ACCORDINGLY)
 trigger:
   batch: true
   branches:
