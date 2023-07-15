@@ -27,13 +27,6 @@ trigger:
     include:
       - DEFRA-CPR-PURVIEW/Security/*
 
-pr: 
- branches:
-    include:
-      - feature/*
-      - feat/*
-      - bug/*
-
 resources:
   repositories:
     - repository: PipelineCommon
