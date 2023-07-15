@@ -49,6 +49,27 @@ function Get-PurviewCollections {
     Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
 }
 
+function Get-PurviewCollectionByName {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$AccessToken,
+
+        [Parameter(Mandatory = $true)]
+        [string]$ApiVersion,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUri,
+
+        [Parameter(Mandatory = $true)]
+        [string]$CollectionName
+    )
+
+    $url = "$($BaseUri)/account/collections/$CollectionName?api-version=$ApiVersion"
+   
+    Invoke-PurviewRestMethod -AccessToken $AccessToken -Url $url
+}
+
 function New-PurviewCollection {
     [CmdletBinding()]
     param (
