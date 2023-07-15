@@ -28,7 +28,7 @@ trigger:
       - DEFRA-CPR-PURVIEW/Security/*
 
 pr:
-- dev
+- main
 
 resources:
   repositories:
