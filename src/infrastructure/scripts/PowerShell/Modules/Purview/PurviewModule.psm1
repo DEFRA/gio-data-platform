@@ -89,7 +89,7 @@ function New-PurviewCollection {
         [string]$BaseUri
     )
 
-    $systemInternalName = $CollectionName.Replace(" ","")
+    $systemInternalName = [regex]::Replace($CollectionName, "[^a-zA-Z0-9]", "")
 
     $url = "$($BaseUri)/account/collections/$($systemInternalName)?api-version=$ApiVersion"
 
