@@ -15,7 +15,7 @@ $jsonFiles = Get-ChildItem -Path $ConfigFilePath -Filter "*.json" -Recurse
 
 $baseUrl = "https://$AccountName.purview.azure.com"
 
-$AccessToken = ""
+$AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
 
 foreach ($file in $jsonFiles) {
   Write-Host $file.FullName
