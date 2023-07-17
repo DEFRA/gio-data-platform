@@ -94,7 +94,7 @@ function New-PurviewCollection {
     $url = "$($BaseUri)/account/collections/$($systemInternalName)?api-version=$ApiVersion"
 
     $json = @{
-        "name" = "systemInternalName"
+        "name" = "$systemInternalName"
         "parentCollection" = @{
             "type" = "CollectionReference"
             "referenceName" = "$ParentCollectionName"
