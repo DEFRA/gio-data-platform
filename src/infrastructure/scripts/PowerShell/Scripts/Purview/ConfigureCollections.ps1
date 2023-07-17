@@ -61,8 +61,13 @@ foreach ($file in $jsonFiles) {
       $collectionObject = Get-PurviewCollections -AccessToken $AccessToken -ApiVersion '2019-11-01-preview' -BaseUri $baseUrl
       $targetCollection = $collectionObject.value | Where-Object { $_.friendlyName -eq $collection.ParentCollectionName }
 
-      Write-Host "Upserting" $collection.Name
-      New-PurviewCollection -AccessToken $AccessToken -CollectionName $collection.Name -ApiVersion '2019-11-01-preview' -BaseUri $baseUrl -ParentCollectionName $targetCollection.name
+      $existingCollection = $collectionObject.value | Where-Object { $_.name -eq $collection.Name }
+
+      if ($null -eq $existingCollection)
+      {
+          Write-Host "Creating Collection" $collection.Name
+          New-PurviewCollection -AccessToken $AccessToken -CollectionName $collection.Name -ApiVersion '2019-11-01-preview' -BaseUri $baseUrl -ParentCollectionName $targetCollection.name
+      }
 
       foreach ($permission in $collection.Permissions) 
       {      
