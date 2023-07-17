@@ -91,7 +91,9 @@ function New-PurviewCollection {
 
     $systemInternalName = $CollectionName.Replace(" ","")
 
-    $url = "$($BaseUri)/account/collections/$($systemInternalName)?api-version=$ApiVersion"
+    $url = "$($BaseUri)/account/collections/$(`$systemInternalName)?api-version=$ApiVersion"
+
+    Write-Host "Pushing to" $url
 
     $json = @{
         "name" = "$systemInternalName"
