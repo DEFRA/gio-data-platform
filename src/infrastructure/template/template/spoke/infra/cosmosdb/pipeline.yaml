@@ -1,0 +1,87 @@
+name: 'V1-E$(envId)-B$(Date:yyyyMMdd)-$(BuildID)'
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - dev
+  paths:
+    include:
+    - /infra/cosmosdb/*
+
+parameters:
+  - name: forceDevDeploy
+    displayName: "Deploy to DEV?"
+    type: boolean
+    default: false
+  - name: envId
+    displayName: Only change for additional DEV env.
+    type: string
+    values:
+      - 01
+      - 02
+      - 03
+      - 04
+      - 05
+    default: 01
+
+
+resources:
+  repositories:
+    - repository: self
+      name: __adoProjectName__/__repoName__
+      type: git
+      ref: ${{ variables['Build.SourceBranch'] }}
+    - repository: gio-data-platform
+      type: github
+      endpoint: DEFRA
+      name: DEFRA/gio-data-platform
+
+variables:
+  envId: ${{ parameters.envId }}
+  keyVaultId: 01
+  prj: __PRJ__
+  prj-lower: __PRJ-LOWER__
+
+extends:
+  template: /templates/defra-common-arm-deploy.yaml@self
+  parameters:
+    ${{ if eq(parameters.envId, '01') }}: 
+      environments:
+        - 'dev'
+        - 'tst'
+        - 'snd'
+    ${{ else }}:
+      environments:
+        - 'dev'
+    
+    templates:
+      - path: infra/cosmosdb
+        name: cosmosdb
+        resourceGroupName: '$(ResourceGroupName)'
+        scope: 'Resource Group'
+        type: 'bicep'
+        postDeployScriptsList: 
+          - displayName: 'Resolve Private Endpoint IPs'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/private-link/resolve-endpoint-ips.ps1'
+            scriptArguments: -TemplateOutput '$(azureDeploymentOutputs)' 
+            
+          - displayName: 'Set Private Endpoint DNS'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/private-link/private-endpoint-dns.ps1'
+            scriptArguments: -TemplateOutput '$(templateOutputWithIPs)'
+            serviceConnectionVariableName: 'privateLinkDnsServiceConnection'          
+          - displayName: 'Configure Synapse to CosmosDb Managed Private Link'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/synapse/ConfigureSynapsePrivateLink.ps1'
+            scriptArguments: '-SynapseWorkspaceName "$(SynapseWorkspaceNameLower)" -PrivateLinkName "synapse-$(SynapseWorkspaceNameLower)-cosmosdb-$(CosmosDbAccountNameLower)" -PrivateLinkResourceId "/subscriptions/$(subscriptionId)/resourceGroups/$(ResourceGroupName)/providers/Microsoft.DocumentDB/databaseAccounts/$(CosmosDbAccountNameLower)" -PrivateLinkGroup "sql"'
+            condition: and(succeeded(), eq(variables['publicNetworkAccess'], 'Disabled'))
+              
+    forceDevDeploy: ${{ parameters.forceDevDeploy }}
+    deployToSecondary:  'none'
+    projectName: $(prj)
+    additionalVariablesFileList:
+      - /vars/cosmosdb-{environment}.yaml@self
+    keyVaultName: '$(KeyVaultName)'

@@ -1,0 +1,56 @@
+parameters:
+- name: templatePath
+  type: string
+- name: templateName
+  type: string
+- name: project
+  type: string
+  values:
+    - __PRJ__
+- name: filesCopyPath
+  type: string
+  default: ''
+- name: additionalFilesCopy
+  type: string
+  default: ''
+- name: resourceGroupType
+  default: INF
+  values:
+    - INF
+- name: resourceGroupNumber
+  type: string
+  default: 01
+- name: synapseIncludedFolders
+  type: string
+  default: ''
+- name: synapseIncludedTypes
+  type: string
+  default: ''
+
+jobs:
+- job: Validate
+  pool:
+    vmImage: windows-latest
+  variables:
+  - template: /vars/common.yaml
+  - template: /vars/dev.yaml
+  - template: /vars/regional/dev-northeurope.yaml
+  - name: Environment.Name
+    value: DEV
+  steps:
+  - template: /templates/step-templates/validate-copy-synapse-template.yaml
+    parameters:
+      templateName: ${{ parameters.templateName }}
+      templatePath: ${{ parameters.templatePath }}
+      project: ${{ parameters.project }}
+      location: ${{ variables.location }}
+      synapseIncludedFolders: ${{ parameters.synapseIncludedFolders }}
+      synapseIncludedTypes: ${{ parameters.synapseIncludedTypes }}
+      filesCopyPath: ${{ parameters.filesCopyPath }}
+      additionalFilesCopy: ${{ parameters.additionalFilesCopy }}
+      resourceGroupType: ${{ parameters.resourceGroupType }}
+      resourceGroupNumber: ${{ parameters.resourceGroupNumber }}
+      ${{ if ne(parameters.project, 'SEC') }}:
+        connection: ${{ variables.azureResourceManagerConnection }}
+      ${{ if eq(parameters.project, 'SEC') }}:  
+        connection: ${{ variables.SECazureResourceManagerConnection }}

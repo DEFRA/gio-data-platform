@@ -1,0 +1,52 @@
+[
+  {
+    "name": "RAW",
+    "directories": [
+      {
+        "name": "GENERIC"
+      } 
+    ]
+  },
+  {
+    "name": "STAGING",
+    "directories": []
+  },
+  {
+    "name": "PROCESSED",
+    "directories": [
+      {
+        "name": "COMPLETED"
+      },
+      {
+        "name": "PROCESSING"
+      },
+      {
+        "name": "APPROVALS",
+        "directories": [
+          {
+            "name": "APPROVED"
+          },
+          {
+            "name": "REQUIRES_APPROVAL"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "PUBLISH",
+    "directories": []
+  },
+  {
+    "name": "ERROR",
+    "directories": []
+  },
+  {
+    "name": "CONFIG",
+    "directories": [
+      {
+        "name": "GenericPipeline"
+      }
+    ]
+  }
+]

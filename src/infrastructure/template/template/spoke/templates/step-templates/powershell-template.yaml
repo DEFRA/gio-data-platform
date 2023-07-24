@@ -1,0 +1,114 @@
+parameters:
+- name: azureResourceManagerConnection
+  type: string
+- name: SECazureResourceManagerConnection
+  type: string
+  default: placeholder
+- name: DNSazureResourceManagerConnection
+  type: string
+  default: placeholder
+- name: keyVaultName
+  type: string
+  default: ''
+- name: scriptsList
+  type: object
+  default: []
+- name: runAlways
+  type: boolean
+  default: false
+- name: runAsPreJob
+  type: boolean
+  default: true
+- name: failOnStandardError
+  type: boolean
+  default: true
+
+steps:
+- ${{ if ne(parameters.keyVaultName, '') }}:
+  - task: AzureKeyVault@1
+    displayName: 'Download AKV secrets for PS'
+    inputs:
+      azureSubscription: '${{ parameters.azureResourceManagerConnection }}'
+      KeyVaultName: '${{ parameters.keyVaultName }}'
+      SecretsFilter: '*'
+      RunAsPreJob: ${{ parameters.runAsPreJob }}
+
+- ${{ each script in parameters.scriptsList }}:
+  - ${{ if ne(script.replaceTokenFilePath, '') }}:
+    - task: replacetokens@3
+      displayName: Replace Tokens - ${{ script.replaceTokenFilePath }}
+      inputs:
+        rootDirectory: ${{ parameters.templatePath }}
+        targetFiles: '${{ script.replaceTokenFilePath }}'
+        encoding: auto
+        writeBOM: true
+        escapeType: json
+        actionOnMissing: warn
+        keepToken: false
+        tokenPrefix: '#{{'
+        tokenSuffix: '}}'
+        useLegacyPattern: false
+        enableTelemetry: false
+  
+  - ${{ if or(eq(script.Type, ''), eq(script.Type, 'AzurePowerShell')) }}:
+    - task: AzurePowerShell@5
+      displayName: '${{ script.displayName }}'
+      ${{ if ne(script.condition, '') }}:  
+        condition: ${{ script.condition }}
+      ${{ if eq(script.runAlways, true) }}:
+        condition: always()
+      inputs:
+        ${{ if eq( script.azureResourceManagerConnection, '' ) }}:
+          azureSubscription: '${{ parameters.azureResourceManagerConnection }}'
+        ${{ if eq( script.azureResourceManagerConnection, 'SEC' ) }}:
+          azureSubscription: '${{ parameters.SECazureResourceManagerConnection }}'
+        ${{ if eq( script.azureResourceManagerConnection, 'DNS' ) }}:
+          azureSubscription: '${{ parameters.DNSazureResourceManagerConnection }}'
+        ScriptType: 'FilePath'
+        ScriptPath: '${{ script.scriptPath }}'
+        ScriptArguments: '${{ script.scriptArguments }}'
+        FailOnStandardError: ${{ parameters.failOnStandardError }}
+        azurePowerShellVersion: 'LatestVersion'
+        ${{ if eq( script.workingDirectory, '' ) }}:
+          workingDirectory: '$(Pipeline.Workspace)'
+        ${{ if ne( script.workingDirectory, '' ) }}:
+          workingDirectory: '${{ script.workingDirectory }}'
+        ${{if eq(script.azurePowershellUseCore, true) }}:
+          pwsh: true
+
+  - ${{ if or(eq(script.Type, 'PowerShell'), eq(script.Type, 'Core')) }}:
+    - task: PowerShell@2
+      ${{ if eq(script.Type, 'PowerShell') }}:
+        displayName: 'Powershell: ${{ script.displayName }}'
+      ${{ if eq(script.Type, 'Core') }}:
+        displayName: 'PS Core: ${{ script.displayName }}'
+      ${{ if eq(script.runAlways, true) }}:
+        condition: always()
+      inputs:
+        ignoreLASTEXITCODE: '${{ not(parameters.failOnStandardError) }}'
+        filePath: '${{ script.scriptPath }}'
+        arguments: '${{ script.scriptArguments }}'
+        failOnStderr: '${{ parameters.failOnStandardError }}'
+        ${{ if eq(script.Type, 'Core') }}:
+          pwsh: true
+        ${{ if eq( script.workingDirectory, '' ) }}:
+          workingDirectory: '$(Pipeline.Workspace)'
+        ${{ if ne( script.workingDirectory, '' ) }}:
+          workingDirectory: '${{ script.workingDirectory }}'
+  
+  - ${{ if eq(script.Type, 'AzureCLI') }}:
+    - task: AzureCLI@2
+      displayName: 'Azure CLI: ${{ script.displayName }}'
+      ${{ if eq(script.runAlways, true) }}:
+        condition: always()
+      inputs:
+        azureSubscription: '${{ parameters.azureResourceManagerConnection }}'
+        scriptType: 'ps'
+        scriptLocation: 'scriptPath'
+        scriptPath: '${{ script.scriptPath }}'
+        arguments: '${{ script.scriptArguments }}'
+        failOnStandardError: ${{ parameters.failOnStandardError }}
+        ${{ if eq( script.workingDirectory, '' ) }}:
+          workingDirectory: '$(Pipeline.Workspace)'
+        ${{ if ne( script.workingDirectory, '' ) }}:
+          workingDirectory: '${{ script.workingDirectory }}'

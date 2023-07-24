@@ -1,0 +1,56 @@
+name: 'V1-B$(Date:yyyyMMdd)-$(BuildID)'
+
+trigger:
+  batch: false
+  branches:
+    include:
+    - '*'
+  paths:
+    include:
+    - /infra/keyvault
+
+parameters:
+  - name: forceDevDeploy
+    displayName: "Deploy to DEV?"
+    type: boolean
+    default: false
+
+resources:
+  repositories:
+    - repository: self
+      name: __adoProjectName__/__repoName__
+      type: git
+      ref: ${{ variables['Build.SourceBranch'] }}
+    - repository: gio-data-platform
+      type: github
+      endpoint: DEFRA
+      name: DEFRA/gio-data-platform
+
+variables:
+  prj: __PRJ__
+  prj-lower: __PRJ-LOWER__
+
+extends:
+  template: /templates/defra-common-arm-deploy.yaml@self
+  parameters:
+    templates:
+      - path: infra/keyvault
+        name: keyvault
+        resourceGroupName: '$(KeyVaultResourceGroupName)'
+        scope: 'Resource Group'
+        type: 'bicep'
+        postDeployScriptsList: 
+          - displayName: 'Resolve Private Endpoint IPs'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/private-link/resolve-endpoint-ips.ps1'
+            scriptArguments: -TemplateOutput '$(azureDeploymentOutputs)' 
+            
+          - displayName: 'Set Private Endpoint DNS'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/private-link/private-endpoint-dns.ps1'
+            scriptArguments: -TemplateOutput '$(templateOutputWithIPs)'
+            serviceConnectionVariableName: 'privateLinkDnsServiceConnection'          
+
+    forceDevDeploy: ${{ parameters.forceDevDeploy }}
+    deployToSecondary:  'none'
+    projectName: __PRJ__    

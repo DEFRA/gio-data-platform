@@ -1,0 +1,90 @@
+parameters:
+
+  - name: templatePath
+    displayName: Path containing ARM template
+    type: string
+
+  - name: templateName
+    displayName: Name of ARM template
+    type: string
+
+  - name: deploy
+    displayName: Deploy template? If false, will only validate.
+    type: boolean
+    default: false
+
+  - name: resourceGroup
+    displayName: Azure Resource Group
+    type: string
+
+  - name: connection
+    displayName: Azure service connection
+    type: string
+
+  - name: targetWorkspaceName
+    displayName: Synapse Workspace Name
+    type: string
+
+  - name: triggersToBeStopped
+    displayName: Synapse Workspace Name
+    type: string
+    default: ''
+
+  - name: deleteArtifactsNotInTemplate
+    displayName: Delete artefacts not in the template
+    type: boolean
+    default: false
+
+steps:
+
+  - task: replacetokens@3
+    displayName: Replace Tokens
+    inputs:
+      rootDirectory: ${{ parameters.templatePath }}
+      targetFiles: '**\*.parameters.json;!**\*.transformed.parameters.json => *.transformed.parameters.json'
+      encoding: auto
+      writeBOM: true
+      escapeType: json
+      actionOnMissing: warn
+      keepToken: false
+      tokenPrefix: '#{{'
+      tokenSuffix: '}}'
+      useLegacyPattern: false
+      enableTelemetry: false
+
+  - ${{ if eq(parameters.deploy, true) }}:
+    
+    - task: AzureSynapseWorkspace.synapsecicd-deploy.toggle-trigger.toggle-triggers-dev@2
+      displayName: 'Toggle OFF Azure Synapse Triggers'
+      inputs:
+        azureSubscription: ${{ parameters.connection }}
+        ResourceGroupName: ${{ parameters.resourceGroup }}
+        WorkspaceName:  ${{ parameters.targetWorkspaceName }}
+        ToggleOn: false
+
+    - task: AzureSynapseWorkspace.synapsecicd-deploy.synapse-deploy.Synapse workspace deployment@2
+      displayName: 'Synpase deployment task for workspace'
+      inputs:
+        TemplateFile: ${{ parameters.templatePath }}\${{ parameters.templateName }}.json
+        ParametersFile: ${{ parameters.templatePath }}\${{ parameters.templateName }}.transformed.parameters.json
+        azureSubscription: ${{ parameters.connection }}
+        ResourceGroupName: ${{ parameters.resourceGroup }}
+        TargetWorkspaceName: ${{ parameters.targetWorkspaceName }}
+        DeleteArtifactsNotInTemplate: ${{ parameters.deleteArtifactsNotInTemplate }}
+    
+    - task: AzureSynapseWorkspace.synapsecicd-deploy.toggle-trigger.toggle-triggers-dev@2
+      displayName: 'Toggle ON Azure Synapse Triggers'
+      inputs:
+        azureSubscription: ${{ parameters.connection }}
+        ResourceGroupName: ${{ parameters.resourceGroup }}
+        WorkspaceName:  ${{ parameters.targetWorkspaceName }}
+      
+    - task: AzureSynapseWorkspace.synapsecicd-deploy.toggle-trigger.toggle-triggers-dev@2
+      displayName: 'Toggle off Azure Synapse specific Triggers'
+      inputs:
+        azureSubscription:  ${{ parameters.connection }}
+        ResourceGroupName: ${{ parameters.resourceGroup }}
+        WorkspaceName: ${{ parameters.targetWorkspaceName }}
+        ToggleOn: false
+        Triggers: ${{ parameters.triggersToBeStopped }}
+

@@ -1,0 +1,65 @@
+name: 'V1-E$(envId)-B$(Date:yyyyMMdd)-$(BuildID)'
+
+parameters:
+  - name: forceDevDeploy
+    displayName: "Force deployment to DEV"
+    type: boolean
+    default: false
+  - name: envId
+    displayName: Only change for additional DEV env.
+    type: string
+    values:
+      - 01
+      - 02
+      - 03
+      - 04
+      - 05
+    default: 01
+
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - dev
+  paths:
+    include:
+      - infra/application-insights/*
+
+resources:
+  repositories:
+    - repository: self
+      name: __adoProjectName__/__repoName__
+      type: git
+      ref: ${{ variables['Build.SourceBranch'] }}
+    - repository: gio-data-platform
+      type: github
+      endpoint: DEFRA
+      name: DEFRA/gio-data-platform
+
+variables:
+  envId: ${{ parameters.envId }}
+  prj: __PRJ__
+  prj-lower: __PRJ-LOWER__
+
+extends:
+  template: /templates/defra-common-arm-deploy.yaml@self
+  parameters:
+    ${{ if eq(parameters.envId, '01') }}: 
+      environments:
+        - 'dev'
+        - 'tst'
+        - 'snd'
+    ${{ else }}:
+      environments:
+        - 'dev'
+    
+    templates:
+      - path: infra/application-insights
+        name: application-insights
+        resourceGroupName: '$(ResourceGroupName)'
+        scope: 'Resource Group'
+        type: 'bicep'
+    forceDevDeploy: ${{ parameters.forceDevDeploy }}
+    projectName: $(prj)

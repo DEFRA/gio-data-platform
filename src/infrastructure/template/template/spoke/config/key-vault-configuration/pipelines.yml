@@ -1,0 +1,51 @@
+name: 'V1-B$(Date:yyyyMMdd)-$(BuildID)'
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - dev
+  paths:
+    include:
+    - config/key-vault-configuration/*
+
+parameters:
+  - name: forceDevDeploy
+    displayName: "Deploy to DEV?"
+    type: boolean
+    default: false
+
+resources:
+  repositories:
+    - repository: __repoName__
+      name: __adoProjectName__/__repoName__
+      type: git
+      ref: ${{ variables['Build.SourceBranch'] }}
+    - repository: gio-data-platform
+      type: github
+      endpoint: DEFRA
+      name: DEFRA/gio-data-platform
+  
+variables:
+  prj: __PRJ__
+  prj-lower: __PRJ-LOWER__
+
+
+extends:
+  template: /templates/basic-powershell-deploy.yaml@__repoName__
+  parameters:
+    environments:
+      - 'dev'
+      - 'tst'
+      - 'snd'
+    psScriptPath: config/key-vault-configuration   
+    forceDevDeploy: ${{ parameters.forceDevDeploy }}
+    additionalVariableGroupsList:
+    - ExternalSecrets
+    deployScriptsList:
+      - displayName: 'Set External Secrets in KeyVault'
+        Type: AzurePowerShell
+        scriptPath: '$(Build.SourcesDirectory)/gio-data-platform/src/infrastructure/scripts/PowerShell/Modules/key-vault/Set-KeyVaultSecrets.ps1'
+        scriptArguments: '-keyVaultName "$(KeyVaultName)" -errorIfEmpty -variables @{ GraphQlTestClientId = "$(GraphQlTestClientId)"; GraphQlTestClientSecret = "$(GraphQlTestClientSecret)"; __PRJ-LOWER__TestApimSubscriptionKey = "$(__PRJ-LOWER__TestApimSubscriptionKey)"; "TracesNT-Username" = "$(TracesNT-Username)"; "TracesNT-Password" = "$(TracesNT-Password)"; }'
+        workingDirectory: '$(Pipeline.Workspace)/powershell_templates'

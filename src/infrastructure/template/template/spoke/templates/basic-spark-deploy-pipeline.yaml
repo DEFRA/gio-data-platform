@@ -1,0 +1,174 @@
+parameters:
+  - name: deployToSecondary
+    type: string
+    default: ''
+  - name: forceDevDeploy
+    displayName: Force deployment to DEV
+    type: boolean
+    default: false
+  - name: releaseUpperEnvs
+    displayName: Release to TST, PRE and PRD
+    type: boolean
+    default: false
+  - name: project
+    displayName: Project? Determines resource group for deployment
+    type: string
+    values:
+      - __PRJ__
+  - name: resourceGroupNumber
+    displayName: The number corresponding with the resource group for deployment. Should contain leading 0 (e.g. 02).
+    type: string
+    default: 01
+  - name: additionalVariablesFileList
+    displayName: Additional Variables file list
+    type: object
+    default: []
+  - name: additionalEnvVariablesFileList
+    displayName: Additional Environment specific Variables file list
+    type: object
+    default: []
+  - name: environments
+    type: object
+    default:
+      - 'dev'
+      - 'tst'
+      - 'snd'
+      - 'pre'
+      - 'prd'
+  - name: azureRegions
+    type: object
+    default:
+    - 'NorthEurope'
+    - 'WestEurope'
+  - name: keyVaultNumber
+    type: string
+    default: '01'
+  - name: buildProjects
+    type: string
+  - name : JobNames
+    type: object
+  - name: prefix
+    type: string
+  - name: storageContainerName
+    type: string
+  - name: runVulnerabilityScan
+    type: boolean
+    default: false
+  - name: runSonarScan
+    type: boolean
+    default: true
+  - name: sonarExclusionPaths
+    type: string
+    default: ''
+  - name: appName
+    displayName: "App/Project name"
+    type: string
+  - name: assemblyVersion
+    type: string
+    default: '1.0.0'
+  - name: testSettings
+    type: object
+    default:
+      unitTestProjects: '**/*Tests.csproj'
+      owaspSettings: ''
+      uiSecurityTests: ''
+      seleniumTests: ''
+      endToEndTestProject: ''
+stages:
+- stage: Validate
+  variables:
+    - template: /vars/dev.yaml
+    - template: /vars/common.yaml
+    - ${{ each file in parameters.additionalVariablesFileList }}:
+      - template: ${{ file }}
+    - name: Environment.Name
+      value: DEV
+  pool: DEFRA-COMMON-windows2022-SSV3
+  jobs:
+  - job: Validate
+    steps:
+      - template: /templates/step-templates/dotnet-spark-build.yaml
+        parameters:
+            solution : '**/*.sln'
+            buildProjects : ${{ parameters.buildProjects }}
+  - ${{ if or(eq(parameters.runSonarScan, true),eq(parameters.runVulnerabilityScan,true)) }}:
+    - job: StaticCodeAnalysis
+      displayName: Static Code Analysis
+      variables:
+        - name: assemblyVersion
+          value: ${{ parameters.assemblyVersion }}
+        - name: versionSufix
+          value:  $[counter(variables['assemblyVersion'], 1)]
+      workspace:
+        clean: all
+      steps:
+        - ${{ if eq(parameters.runSonarScan, true) }}:
+          - template: /templates/step-templates/dotnet-sonar-spark-build.yaml
+            parameters:
+              solution : '**/*.sln'
+              buildProjects : ${{ parameters.buildProjects }}
+              appName: ${{ parameters.appName }}
+              testSettings: ${{ parameters.testSettings }}
+              sonarExclusionPaths: ${{ parameters.sonarExclusionPaths }}
+        - ${{ else }}:
+          - template: /templates/step-templates/dotnet-spark-build.yaml
+            parameters:
+              solution : '**/*.sln'
+              buildProjects : ${{ parameters.buildProjects }}
+        - ${{ if eq(parameters.runVulnerabilityScan,true) }}:
+          - template: /templates/step-templates/owasp-vulnerability-check.yaml
+            parameters:
+              appName: ${{ parameters.appName }}
+
+- ${{ each env in parameters.environments }}:
+  - stage: ${{ upper(env) }}
+    pool: DEFRA-COMMON-windows2022-SSV3
+    variables:
+      - template: /vars/common.yaml
+      - template: /vars/${{ env }}.yaml
+      - ${{ each file in parameters.additionalVariablesFileList }}:
+        - template: ${{ file }}
+      - name: secondaryRegionEnvironment
+        value: ${{ parameters.deployToSecondary }}
+    ${{ if eq(env, 'dev') }}:
+      dependsOn: Validate
+      condition: and(succeeded(), or(eq(${{ parameters.forceDevDeploy }}, true), in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    ${{ if eq(env, 'snd') }}:
+      dependsOn: DEV
+      condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), or(in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    ${{ if eq(env, 'tst') }}:
+      dependsOn: DEV
+      condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), or(in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    ${{ if eq(env, 'pre') }}:
+      dependsOn: TST
+      condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    ${{ if eq(env, 'prd') }}:
+      dependsOn: PRE
+      condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:    
+    - ${{ each region in parameters.azureRegions }}:
+      - ${{ if or(eq(variables.primaryRegion, region), eq(lower(parameters.deployToSecondary), env), and(ne(parameters.deployToSecondary, ''), ne(lower(parameters.deployToSecondary), 'none'), eq(env, 'prd'))) }}:
+        - deployment: Deploy${{ upper(env) }}_${{ region }}
+          workspace:
+            clean: all
+          variables:
+            - template: /vars/regional/${{ env }}-${{ lower(region) }}.yaml            
+          environment: ${{ upper(env) }}
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                - ${{ each sparkJobName in parameters.JobNames }}:  
+                  - template: /templates/step-templates/powershell-template.yaml
+                    parameters:
+                      azureResourceManagerConnection: '${{ variables.azureResourceManagerConnection }}'
+                      SECazureResourceManagerConnection: '${{ variables.SECazureResourceManagerConnection }}'
+                      DNSazureResourceManagerConnection: '${{ variables.DNSazureResourceManagerConnection }}'
+                      keyVaultName: '$(Environment.Name)TRD$(nc-function-infrastructure)$(nc-resource-keyvault)1001'
+                      scriptsList:
+                        - displayName: 'Deploy Spark Job to Synapse'
+                          Type: '${{ parameters.scriptType }}'
+                          scriptPath: '$(Pipeline.Workspace)/drop/PowerShell/storage/CopyFilesToStorageAccount.ps1'
+                          scriptArguments: '-StorageName "$(environment)udp$(nc-function-infrastructure-lower)$(nc-resource-datalake-lower)10$(envId)" -StorageRG "$(Environment.Name)UDP$(nc-function-infrastructure)$(nc-resource-resourcegroup)10$(envId)" -ContainerName "${{ parameters.storageContainerName }}" -SourceDirectory "$(Pipeline.Workspace)/drop/SparkJobs" -TargetDirectory "synapse/workspaces/${{ env }}udp$(nc-function-infrastructure-lower)$(nc-resource-synapse-lower)10$(envId)/batchjobs/${{ sparkJobName }}" -FilesFilter "${{ parameters.prefix }}.${{ sparkJobName }}.zip" -FlattenFiles $true'
+                          workingDirectory: '$(Pipeline.Workspace)/drop/PowerShell'
+                          azurePowershellUseCore: true

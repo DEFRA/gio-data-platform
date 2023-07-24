@@ -1,0 +1,180 @@
+parameters:
+  - name: forceDevDeploy
+    displayName: Force deployment to DEV
+    type: boolean
+    default: false
+  - name: psScriptPath
+    displayName: Folder Path containing the powershell scripts (all required to run and copy)
+    type: string
+    default: 'powershell'
+  - name: psScriptName
+    displayName: Name of the script to run
+    type: string
+    default: ''
+  - name: arguments
+    displayName: Powershell Script arguments to run
+    type: string
+    default: ''
+  - name: taskDisplayName
+    type: string
+    default: 'Run Powershell Scripts'
+  - name: environments
+    type: object
+    default:
+      - 'dev'
+      - 'tst'
+      - 'snd'
+      - 'pre'
+      - 'prd'
+  - name: templatePath
+    displayName: Folder Path the files you wish to replace tokens for
+    type: string
+    default: ''
+  - name: targetFiles
+    displayName: The target files you wish to replace tokens for
+    type: string
+    default: ''
+  - name: deployToSecondary
+    type: string
+    default: ''
+  - name: azureRegions
+    type: object
+    default:
+    - 'NorthEurope'
+    - 'WestEurope'
+  - name: deployScriptsList
+    type: object
+    default: []
+  - name: additionalVariablesFileList
+    displayName: Additional Variables file list
+    type: object
+    default: []
+  - name: additionalVariableGroupsList
+    displayName: Additional Variable groups list
+    type: object
+    default: []
+  - name: scriptType
+    type: string
+    default: 'PowerShell'
+  - name: contentFilter
+    type: string
+    default: ''
+  - name: kvName
+    type: string
+    default: '$(Environment.Name)TRD$(nc-function-infrastructure)$(nc-resource-keyvault)1001'
+  
+stages:
+- stage: Validate
+  variables:
+    - template: /vars/dev.yaml
+    - template: /vars/common.yaml
+    - ${{ each file in parameters.additionalVariablesFileList }}:
+      - template: ${{ file }}
+    - ${{ each group in parameters.additionalVariableGroupsList }}:
+      - group: ${{ group }}-DEV
+    - name: Environment.Name
+      value: DEV
+  pool: DEFRA-TRD
+  jobs:
+  - job: Validate
+    steps:
+    - checkout: self
+    - checkout: __repoName__
+    - task: CopyFiles@2
+      displayName: Copy Powershell Scripts
+      inputs:
+        SourceFolder: $(Build.Repository.Name)\${{ parameters.psScriptPath }}
+        TargetFolder: $(Build.ArtifactStagingDirectory)
+        CleanTargetFolder: true
+        ${{ if ne(parameters.contentFilter, '') }}:
+          Contents: ${{ parameters.contentFilter }}
+    
+    - task: CopyFiles@2
+      displayName: Copy Powershell Scripts Library
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)\__repoName__\templates\powershell\'
+        TargetFolder: $(Build.ArtifactStagingDirectory)\PowerShell
+        Contents: |
+          **\*.ps1
+          **\*.psm1
+          !**\tests
+
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Artifacts
+      inputs:
+        targetPath: $(Build.ArtifactStagingDirectory)
+        artifactName: 'powershell_templates'
+
+- ${{ each env in parameters.environments }}:
+  - stage: ${{ upper(env) }}
+    pool: DEFRA-COMMON-windows2022-SSV3
+    variables:
+      - template: /vars/common.yaml
+      - template: /vars/${{ env }}.yaml
+      - ${{ each file in parameters.additionalVariablesFileList }}:
+        - template: ${{ file }}
+      - ${{ each group in parameters.additionalVariableGroupsList }}:
+        - group: ${{ group }}-${{ upper(env) }}
+      - name: secondaryRegionEnvironment
+        value: ${{ parameters.deployToSecondary }}
+    ${{ if eq(env, 'dev') }}:
+      dependsOn: Validate
+      condition: and(succeeded(), or(eq(${{ parameters.forceDevDeploy }}, true), in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    ${{ if eq(env, 'snd') }}:
+      dependsOn: DEV
+      condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), or(in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    ${{ if eq(env, 'tst') }}:
+      dependsOn: DEV
+      condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), or(in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+    ${{ if eq(env, 'pre') }}:
+      dependsOn: TST
+      condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    ${{ if eq(env, 'prd') }}:
+      dependsOn: PRE
+      condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
+    - ${{ each region in parameters.azureRegions }}:
+      - ${{ if or(eq(variables.primaryRegion, region), eq(lower(parameters.deployToSecondary), env), and(ne(parameters.deployToSecondary, ''), ne(lower(parameters.deployToSecondary), 'none'), eq(env, 'prd'))) }}:
+        - deployment: Deploy${{ upper(env) }}_${{ region }}
+          workspace:
+            clean: all
+          variables:
+            - template: /vars/regional/${{ env }}-${{ lower(region) }}.yaml
+          environment: ${{ upper(env) }}
+          strategy:
+            runOnce:
+              deploy:
+                steps:
+                - ${{ if ne(parameters.templatePath, '') }}:
+                  - task: replacetokens@3
+                    displayName: Replace Tokens
+                    inputs:
+                      rootDirectory: ${{ parameters.templatePath }}
+                      targetFiles: ${{ parameters.targetFiles }}
+                      encoding: auto
+                      writeBOM: true
+                      escapeType: json
+                      actionOnMissing: warn
+                      keepToken: false
+                      tokenPrefix: '#{{'
+                      tokenSuffix: '}}'
+                      useLegacyPattern: false
+                      enableTelemetry: false
+                    
+                - template: /templates/step-templates/powershell-template.yaml
+                  parameters:
+                    azureResourceManagerConnection: '${{ variables.azureResourceManagerConnection }}'
+                    SECazureResourceManagerConnection: '${{ variables.SECazureResourceManagerConnection }}'
+                    DNSazureResourceManagerConnection: '${{ variables.DNSazureResourceManagerConnection }}'
+                    keyVaultName: '${{ parameters.kvName }}'
+                    ${{ if eq(parameters.psScriptName, '') }}:
+                      scriptsList:
+                        ${{ parameters.deployScriptsList }}
+                    ${{ if ne(parameters.psScriptName, '') }}:
+                      scriptsList:
+                        - displayName: '${{ parameters.taskDisplayName }}'
+                          Type: '${{ parameters.scriptType }}'
+                          scriptPath: '$(Pipeline.Workspace)/powershell_templates/${{ parameters.psScriptName }}'
+                          scriptArguments: '${{ parameters.arguments }}'
+                          workingDirectory: '$(Pipeline.Workspace)/powershell_templates'
+                          azurePowershellUseCore: true

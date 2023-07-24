@@ -1,0 +1,189 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "name": {
+      "value": "#{{ SynapseWorkspaceName }}"
+    },
+    "environment": {
+      "value": "#{{ Environment.Name }}#{{ envId }}"
+    },
+    "azureAdAdminLogin": {
+      "value": "ADO-DefraGovUK-AZD-__PRJ__-#{{ Environment.Name }}1"
+    },
+    "azureAdAdminSsid": {
+      "value": "#{{ spnObjectId }}"
+    },
+    "defaultDataLakeStorageAccountName": {
+      "value": "#{{ StorageAccountName }}"
+    },
+    "defaultDataLakeStorageFilesystemName": {
+      "value": "lake"
+    },
+    "sqlAdministratorLogin": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/#{{ subscriptionId }}/resourceGroups/#{{ KeyVaultResourceGroupName }}/providers/Microsoft.KeyVault/vaults/#{{ KeyVaultName }}"
+        },
+        "secretName": "__PRJ-LOWER__SynapseSql-AdminLogin"
+      }
+    },
+    "sqlAdministratorLoginPassword": {
+      "reference": {
+        "keyVault": {
+          "id": "/subscriptions/#{{ subscriptionId }}/resourceGroups/#{{ KeyVaultResourceGroupName }}/providers/Microsoft.KeyVault/vaults/#{{ KeyVaultName }}"
+        },
+        "secretName": "__PRJ-LOWER__SynapseSql-AdminPassword"
+      }
+    },
+    "managedVirtualNetwork": {
+      "value": "default"
+    },
+    "preventDataExfiltration": {
+      "value": #{{ preventDataExfiltration }}
+    },
+    "actionGroupsOperationsTeamname": {
+      "value": "Operations Team #{{ actionGroupsOperationsTeamName}}"
+    },
+    "customTags": {
+      "value": {
+        "Name": "#{{ SynapseWorkspaceName }}",
+        "Purpose": "SYNAPSE"
+      }
+    },
+    "customTagsDataLake": {
+      "value": {
+        "Name": "#{{ StorageAccountName }}",
+        "Purpose": "DATA-LAKE-STORAGE"
+      }
+    },
+    "customTagsStorageAccount": {
+      "value": {
+        "Name": "#{{ StorageAccount }}",
+        "Purpose": "INDEXING-BLOB-STORAGE"
+      }
+    },
+    "storageAccessTier": {
+      "value": "Hot"
+    },
+    "storageAccountType": {
+      "value": "Standard_RAGRS"
+    },
+    "storageIsHnsEnabled": {
+      "value": true
+    },
+    "sqlPoolName": {
+      "value": "datawarehouse"
+    },
+    "sparkPoolName": {
+      "value": "sparkpool"
+    },
+    "dotnetSparkPoolName": {
+      "value": "dotnetSparkPool"
+    },
+    "poolSizeSku": {
+      "value": "DW100c"
+    },
+    "sparkAutoScaleEnabled": {
+      "value": false
+    },
+    "sparkMinNodeCount": {
+      "value": 1
+    },
+    "sparkMaxNodeCount": {
+      "value": 5
+    },
+    "sparkNodeCount": {
+      "value": "#{{ sparkNodeCount }}"
+    },
+    "sparkNodeSizeFamily": {
+      "value": "MemoryOptimized"
+    },
+    "sparkNodeSize": {
+      "value": "Small"
+    },
+    "sparkAutoPauseEnabled": {
+      "value": true
+    },
+    "sparkAutoPauseDelayInMinutes": {
+      "value": 120
+    },
+    "sparkVersion": {
+      "value": "3.1"
+    },
+    "dotnetSparkVersion": {
+      "value": "2.4"
+    },
+    "sparkConfigPropertiesFileName": {
+      "value": ""
+    },
+    "sparkConfigPropertiesContent": {
+      "value": ""
+    },
+    "sessionLevelPackagesEnabled": {
+      "value": true
+    },
+    "createSQLPool": {
+      "value": #{{ createSQLPool }}
+    },
+    "createSparkCluster": {
+      "value": #{{ createSparkCluster }}
+    },
+    "vaultName": {
+      "value": "#{{ KeyVaultName }}"
+    },
+    "vaultRG": {
+      "value": "#{{ KeyVaultResourceGroupName }}"
+    },
+    "buildAgentIPAddress": {
+      "value": "#{{ buildAgentIP }}"
+    },
+    "deploymentPrincipalId": {
+      "value": "#{{ spnObjectId }}"
+    },
+    "storageBlobDataContributorGroupRoleId": {
+       "value": "#{{ sqlServerAad__PRJ__AdminId }}"
+    },
+    "dfsPrivateEndpointDNSZone": {
+      "value": "#{{ privateLinkDnsZoneNameStorageDfs }}"
+    },
+    "blobPrivateEndpointDNSZone": {
+      "value": "#{{ privateLinkDnsZoneNameStorageBlob }}"
+    },
+    "synapsePrivateEndpointDNSZone": {
+      "value": "#{{ privateLinkDnsZoneNameSynapseDev }}"
+    },
+    "synapsePrivateEndpointNamesPrimary": {
+      "value": {
+        "primary": "#{{ synapsePrivateEndpointNamesPrimary }}"
+      }
+    },
+    "dfsPrivateEndpointNamesPrimary": {
+      "value": {
+        "primary": "#{{ dfsPrivateEndpointNamesPrimary }}"
+      }
+    },
+    "blobPrivateEndpointNamesPrimary": {
+      "value": {
+        "primary": "#{{ blobPrivateEndpointNamesPrimary }}"
+      }
+    },
+    "__PRJ-LOWER__Vnet": {
+      "value": {
+        "name": "#{{ __PRJ-LOWER__VnetName }}",
+        "peSubnet": "#{{ __PRJ-LOWER__PrivateEndpointSubnet }}",
+        "resourceGroup": "#{{ __PRJ-LOWER__VnetResourceGroup }}"
+      }
+    },
+    "privateDnsResourceGroups": {
+      "value": {
+        "primary": "#{{ privateLinkDnsResourceGroup }}",
+        "secondary": "#{{ privateLinkDnsResourceGroupSecondary }}"
+      }
+    },
+    "logAnalyticsWorkspace": { "value": "#{{ LogAnalyticsWorkspaceName }}" },
+    "defaultDataLakeStorageAccountUrlSuffix": {
+      "value": ".dfs.core.windows.net"
+    }
+  }
+}

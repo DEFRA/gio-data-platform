@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "DEFRA",
+  "classifications": [ "Common", "Console" ],
+  "identity": "DEFRA.GIO.Platform.Spoke",
+  "name": "DEFRA.GIO.Platform.Spoke",
+  "shortName": "DEFRA.GIO.Platform.Spoke",
+  "sourceName": "DEFRA.GIO",
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "symbols": {
+    "adoAccountName": {
+      "type": "parameter",
+      "datatype": "text",
+      "replaces": "__adoAccountName__",
+      "defaultValue": "XXX"
+    },
+    "patToken": {
+      "type": "parameter",
+      "datatype": "text",
+      "replaces": "__patToken__",
+      "defaultValue": "XXX"
+    },
+    "namespace": {
+      "type": "parameter",
+      "datatype": "text",
+      "replaces": "__repoName__",
+      "defaultValue": "XXX"
+    },
+    "adoProjectName": {
+      "type": "parameter",
+      "datatype": "text",
+      "replaces": "__adoProjectName__",
+      "defaultValue": "XXX"
+    },
+    "projectCode": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "XXX"
+    },
+    "projectCodeUpper": {
+      "type": "generated",
+      "generator": "casing",
+      "replaces": "__PRJ__",
+      "parameters": {
+        "source": "projectCode",
+        "toLower": false
+      }
+    },
+    "projectCodeLower": {
+      "type": "generated",
+      "generator": "casing",
+      "replaces": "__PRJ-LOWER__",
+      "parameters": {
+        "source": "projectCode",
+        "toLower": true
+      }
+    }
+  },
+  "postActions": [
+    {
+      "actionId": "3A7C4B45-1F5D-4A30-959A-51B88E82B5D2",
+      "args": {
+        "executable": "powershell",
+        "args": "-File setup.ps1",
+        "redirectStandardOutput": false,
+        "redirectStandardError": false
+      },
+      "manualInstructions": [
+        {
+          "text": "Run 'setup.ps1'"
+        }
+      ],
+      "continueOnError": false,
+      "description ": "setups the project by calling setup.ps1"
+    }
+  ]
+}

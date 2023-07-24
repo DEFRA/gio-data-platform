@@ -1,0 +1,137 @@
+parameters:
+- name: templatePath
+  type: string
+- name: templateName
+  type: string
+- name: location
+  type: string
+- name: connection
+  type: string
+- name: project
+  type: string
+  values:
+    - TRF
+    - UDP
+    - NTD
+    - REF
+    - POC
+- name: filesCopyPath
+  type: string
+  default: ''
+- name: additionalFilesCopy
+  type: string
+  default: ''
+- name: resourceGroupType
+  default: INF
+  values:
+    - INF
+- name: resourceGroupNumber
+  type: string
+  default: 01
+- name: synapseIncludedFolders
+  type: string
+  default: ''
+- name: synapseIncludedTypes
+  type: string
+  default: ''
+
+steps:
+- checkout: self
+- checkout: __repoName__
+
+- task: Synapse workspace deployment@2
+  displayName: Generate Synapse Templates
+  inputs:
+    operation: 'validate'
+    TargetWorkspaceName: ${{ parameters.templateName }}   
+    ArtifactsFolder: '$(System.DefaultWorkingDirectory)\$(Build.Repository.Name)\src\synapse'
+
+- task: CopyFiles@2
+  displayName: Copy Generated Synapse Templates
+  inputs:
+    SourceFolder: $(System.DefaultWorkingDirectory)\ExportedArtifacts
+    TargetFolder: $(Build.ArtifactStagingDirectory)
+    Contents: |
+      TemplateForWorkspace.json
+      TemplateParametersForWorkspace.json
+      !**\*.yaml
+    CleanTargetFolder: true
+    flattenFolders: true
+
+- ${{ if ne(parameters.synapseIncludedFolders, '') }}:
+  - template: /templates/step-templates/powershell-template.yaml
+    parameters:
+      azureResourceManagerConnection: ${{ parameters.connection }}
+      scriptsList:
+        - displayName: Selective Deployment - removing not needed sections
+          scriptPath: '$(Build.SourcesDirectory)\__repoName__\templates\powershell\synapse\SetSynapseDeploymentItems.ps1'
+          scriptArguments: '-IncludedTypes "${{ parameters.synapseIncludedTypes }}" -SourceFileFullPath "$(Build.ArtifactStagingDirectory)\TemplateForWorkspace.json" -IncludedFolders "${{ parameters.synapseIncludedFolders }}"'
+
+- task: CopyFiles@2
+  displayName: Copy Additonal Files and parameters
+  inputs:
+    ${{ if ne(parameters.filesCopyPath, '') }}:
+      SourceFolder: $(Build.Repository.Name)\${{ parameters.filesCopyPath }}
+    ${{ if eq(parameters.filesCopyPath, '') }}:
+      SourceFolder: $(Build.Repository.Name)\${{ parameters.templatePath }}
+    TargetFolder: $(Build.ArtifactStagingDirectory)
+    Contents: |
+      ${{ parameters.templateName }}.parameters.json
+      ${{ parameters.additionalFilesCopy }}
+      !**\*.yaml
+    CleanTargetFolder: false
+    flattenFolders: true
+
+- task: CopyFiles@2
+  displayName: Copy Powershell Library Scripts
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)\__repoName__\templates\powershell\'
+    TargetFolder: $(Build.ArtifactStagingDirectory)\PowerShell
+    Contents: |
+      **\*.ps1
+      **\*.psm1
+      !**\tests
+
+- task: PublishPipelineArtifact@1
+  displayName: Publish Template Artifacts
+  inputs:
+    targetPath: $(Build.ArtifactStagingDirectory)
+    artifactName: template
+    parallel: true
+    parallelCount: 8
+
+- task: DotNetCoreCLI@2
+  displayName: 'DotNet Restore for Tests'
+  inputs:
+    command: 'restore'  
+    feedsToUse: 'select'
+    vstsFeed: DEFRA-TRD
+    noCache: true
+    projects: '**/*Tests.csproj'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'DotNet Build Tests'
+  inputs:
+    command: 'build'
+    projects: '**\*Tests.sln'
+    workingDirectory: '$(System.DefaultWorkingDirectory)'
+    arguments: '--configuration Release'
+
+- task: CopyFiles@2
+  displayName: Copy Built Tests files
+  inputs:
+    SourceFolder: $(System.DefaultWorkingDirectory)
+    TargetFolder: $(Build.ArtifactStagingDirectory)\tests
+    Contents: |
+      **/bin/Release/**
+    CleanTargetFolder: true
+    flattenFolders: false
+
+- task: PublishPipelineArtifact@1
+  displayName: Publish tests Artifacts
+  inputs:
+    targetPath: $(Build.ArtifactStagingDirectory)\tests
+    artifactName: tests
+    parallel: true
+    parallelCount: 8

@@ -1,0 +1,82 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "accountName": {
+      "value": "#{{ CosmosDbAccountName }}"
+    },
+    "dbPublishedName": {
+      "value": "__PRJ-LOWER__PublishedSet"
+    },
+    "dbPublishedThroughputMax": {
+      "value": "#{{ dbPublishedThroughputMax }}"
+    },
+    "dbLookupName": {
+      "value": "__PRJ-LOWER__LookupSet"
+    },
+    "dbLookupThroughputMax": {
+      "value": "#{{ dbLookupThroughputMax }}"
+    },
+    "environment": {
+      "value": "#{{ Environment.Name }}"
+    },
+    "buildAgentIPAddress": { "value": "#{{ buildAgentIP }}" },
+    "customTags": {
+      "value": {
+        "Name": "#{{ CosmosDbAccountName }}",
+        "Purpose": "Cosmos Database"
+      }
+    },
+     "keyVaultRG": {
+      "value": "#{{ KeyVaultResourceGroupName }}"
+    },
+     "keyVaultName": {
+      "value": "#{{ KeyVaultName }}"
+    },
+     "envId":{
+      "value": "#{{ envId }}"
+    },
+    "prj":{
+       "value": "#{{ prj }}"
+    },
+    "freeTier": {
+      "value": "#{{ freeTier }}"
+    },
+    "deploymentPrincipalId": {
+      "value": "#{{ spnObjectId }}"
+    },
+    "synapseWorkspaceName": {
+      "value": "#{{ SynapseWorkspaceName }}"
+    },
+    "publicNetworkAccess": {
+      "value": "#{{ publicNetworkAccess }}"
+    },
+    "__PRJ-LOWER__Vnet": {
+      "value": {
+        "name": "#{{ __PRJ-LOWER__VnetName }}",
+        "peSubnet": "#{{ __PRJ-LOWER__PrivateEndpointSubnet }}",
+        "resourceGroup": "#{{ __PRJ-LOWER__VnetResourceGroup }}"
+      }
+    },
+    "cosmosPrivateEndpointDNSZone": {
+      "value": "#{{ privateLinkDnsZoneNameCosmosSql }}"
+    },
+    "cosmosPrivateEndpointNamesPrimary": {
+      "value": {
+        "primary": "#{{ cosmosPrivateEndpointNamesPrimary }}"
+      }
+    },
+    "privateDnsResourceGroups": {
+      "value": {
+        "primary": "#{{ privateLinkDnsResourceGroup }}",
+        "secondary": "#{{ privateLinkDnsResourceGroupSecondary }}"
+      }
+    },
+    "primaryRegion": { 
+      "value": "#{{ primaryRegion }}"
+    },
+    "secondaryRegion": { 
+      "value": "#{{ secondaryRegion }}"
+    }
+  }
+}

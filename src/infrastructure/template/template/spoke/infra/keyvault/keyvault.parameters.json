@@ -1,0 +1,162 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vaultName": {
+      "value": "#{{ KeyVaultName }}"
+    },
+    "vaultPrivateEndpointName": {
+      "value": "#{{ vaultPrivateEndpointName }}"
+    },
+    "vaultPrivateEndpointDNSZone": {
+      "value": "#{{ privateLinkDnsZoneNameKeyVault }}"
+    },
+    "vaultPrivateEndpointSubnetID": {
+      "value": "/subscriptions/#{{ subscriptionId }}/resourceGroups/#{{ __PRJ-LOWER__VnetResourceGroup }}/providers/Microsoft.Network/virtualNetworks/#{{ __PRJ-LOWER__VnetName }}/subnets/#{{ __PRJ-LOWER__PrivateEndpointSubnet }}"
+    },
+    "AADTenantID": {
+      "value": "#{{ tenantId }}"
+    },
+    "accessPolicies": {
+      "value": [
+        {
+          "tenantId": "#{{ tenantId }}",
+          "objectId": "#{{ spnObjectId }}",
+          "permissions": {
+            "secrets": [
+              "get",
+              "list",
+              "set"
+            ],
+            "certificates": [
+              "get",
+              "list"
+            ]
+          }
+        },
+        {
+          "tenantId": "#{{ tenantId }}",
+          "objectId": "#{{ keyVaultAdminsEUX }}",
+          "permissions": {
+            "secrets": [
+              "get",
+              "list",
+              "set",
+              "delete",
+              "restore",
+              "recover",
+              "purge"
+            ],
+            "certificates": [
+              "get",
+              "list",
+              "delete",
+              "create",
+              "import",
+              "update",
+              "managecontacts",
+              "getissuers",
+              "listissuers",
+              "setissuers",
+              "deleteissuers",
+              "manageissuers",
+              "recover",
+              "purge",
+              "backup",
+              "restore"
+            ]
+          }
+        },
+        {
+          "tenantId": "#{{ tenantId }}",
+          "objectId": "#{{ keyVaultAdminsCSC }}",
+          "permissions": {
+            "secrets": [
+              "get",
+              "list",
+              "set",
+              "delete",
+              "restore",
+              "recover",
+              "purge"
+            ],
+            "certificates": [
+              "get",
+              "list",
+              "delete",
+              "create",
+              "import",
+              "update",
+              "managecontacts",
+              "getissuers",
+              "listissuers",
+              "setissuers",
+              "deleteissuers",
+              "manageissuers",
+              "recover",
+              "purge",
+              "backup",
+              "restore"
+            ]
+          }
+        },
+        {
+          "tenantId": "#{{ tenantId }}",
+          "objectId": "#{{ sqlServerAadTrdAdminId }}",
+          "permissions": {
+            "secrets": [
+              "get",
+              "list",
+              "set",
+              "delete",
+              "restore",
+              "recover"
+            ],
+            "certificates": [
+              "get",
+              "list",
+              "delete",
+              "create",
+              "import",
+              "update",
+              "managecontacts",
+              "recover",
+              "backup",
+              "restore"
+            ]
+          }
+        }
+      ]
+    },
+    "customTags": {
+      "value": {
+        "Name": "#{{ KeyVaultName }}",
+        "Purpose": "__PRJ__-KEYVAULT"
+      }
+    },
+    "__PRJ-LOWER__Network": {
+      "value": {
+        "primaryRg": "#{{ __PRJ-LOWER__VnetResourceGroup }}",
+        "primaryVnetName": "#{{ __PRJ-LOWER__VnetName }}",
+        "primarySubnetBaseName": "#{{ primarySubnetBaseName }}"
+      }
+    },
+    "environment": {
+      "value": "#{{ Environment.Name }}"
+    },
+    "buildAgentIPAddress": {
+      "value": "#{{ buildAgentIP }}"
+    },
+    "subnetsCount": {
+      "value": 20
+    },
+    "privateDnsResourceGroups": {
+      "value": {
+        "primary": "#{{ privateLinkDnsResourceGroup }}"
+      }
+    },
+      "defaultSecretNames": {
+      "value": "__PRJ-LOWER__SynapseSql-AdminLogin,__PRJ-LOWER__SynapseSql-AdminPassword"
+    }
+  }
+}

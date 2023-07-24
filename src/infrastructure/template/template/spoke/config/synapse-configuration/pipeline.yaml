@@ -1,0 +1,84 @@
+name: 'V1-E$(envId)-B$(Date:yyyyMMdd)-$(BuildID)'
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - dev
+  paths:
+    include:
+    - /config/synapse-configuration/*
+
+parameters:
+  - name: forceDevDeploy
+    displayName: "Deploy to DEV?"
+    type: boolean
+    default: false
+  - name: envId
+    displayName: Only change for additional DEV env.
+    type: string
+    values:
+      - 01
+      - 02
+      - 03
+      - 04
+      - 05
+    default: 01
+
+resources:
+  repositories:
+    - repository: __repoName__
+      name: __adoProjectName__/__repoName__
+      type: git
+      ref: ${{ variables['Build.SourceBranch'] }}
+    - repository: gio-data-platform
+      type: github
+      endpoint: DEFRA
+      name: DEFRA/gio-data-platform
+
+variables:
+  envId: ${{ parameters.envId }}
+  prj: __PRJ__
+  prj-lower: __PRJ-LOWER__
+
+extends:
+  template: /templates/basic-powershell-deploy.yaml@__repoName__
+  parameters:
+    ${{ if eq(parameters.envId, '01') }}: 
+      environments:
+        - 'dev'
+        - 'tst'
+        - 'snd'
+    ${{ else }}:
+      environments:
+        - 'dev'
+    
+    psScriptPath: config/synapse-configuration   
+    forceDevDeploy: ${{ parameters.forceDevDeploy }}
+    deployScriptsList:
+      - displayName: 'Create Data Lake Folder Structure'
+        Type: AzurePowerShell
+        scriptPath: '$(Build.SourcesDirectory)/gio-data-platform/src/infrastructure/scripts/PowerShell/Modules/storage/SetDataLakeFolderStructure.ps1'
+        scriptArguments: '-DataLakeAccountName "$(StorageAccountNameLower)" -ContainerName "defraanalyticsdata" -ConfigurationFile "$(Pipeline.Workspace)/powershell_templates/data-lake-configuration/folder-config-$(environment).json" '
+        workingDirectory: '$(Pipeline.Workspace)/powershell_templates/data-lake-configuration'
+      - displayName: 'Upload Data Lake Config Files'
+        Type: AzurePowerShell
+        scriptPath: '$(Build.SourcesDirectory)/gio-data-platform/src/infrastructure/scripts/PowerShell/Modules/storage/SetDataLakeFileConfig.ps1'
+        scriptArguments: '-DataLakeAccountName "$(StorageAccountNameLower)" -ContainerName "defraanalyticsdata" -ConfigurationPath "$(Pipeline.Workspace)/powershell_templates/data-lake-file-configuration" -ConfigurationFolderName "CONFIG"  '
+        workingDirectory: '$(Pipeline.Workspace)/powershell_templates/data-lake-file-configuration'
+      - displayName: 'Upload Data Lake Files for Automation Testing'
+        Type: AzurePowerShell
+        scriptPath: '$(Build.SourcesDirectory)/gio-data-platform/src/infrastructure/scripts/PowerShell/Modules/storage/SetDataLakeFileConfig.ps1'
+        scriptArguments: '-DataLakeAccountName "$(StorageAccountNameLower)" -ContainerName "defraanalyticsdata" -ConfigurationPath "$(Pipeline.Workspace)/powershell_templates/data-lake-test-files" -ConfigurationFolderName "TESTFILES"  '
+        workingDirectory: '$(Pipeline.Workspace)/powershell_templates/data-lake-test-files'
+      - displayName: 'Upload Ingest Api Config file'
+        Type: AzurePowerShell
+        scriptPath: '$(Build.SourcesDirectory)/gio-data-platform/src/infrastructure/scripts/PowerShell/Modules/storage/CopyFilesToStorageAccount.ps1'
+        scriptArguments: '-StorageName "$(StorageAccountNameLower)" -StorageRG "$(ResourceGroupName)" -ContainerName "defraanalyticsdata" -SourceDirectory "$(Pipeline.Workspace)/powershell_templates/data-lake-file-configuration/IngestApiConfig/$(environment)" -TargetDirectory "CONFIG" -FilesFilter "*.*" -FlattenFiles $true'
+        workingDirectory: '$(Pipeline.Workspace)/powershell_templates/data-lake-test-files'
+      - displayName: 'Upload processing config'
+        Type: AzurePowerShell
+        scriptPath: '$(Build.SourcesDirectory)/gio-data-platform/src/infrastructure/scripts/PowerShell/Modules/storage/CopyFilesToStorageAccount.ps1'
+        scriptArguments: '-StorageName "$(StorageAccountNameLower)" -StorageRG "$(ResourceGroupName)" -ContainerName "defraanalyticsdata" -SourceDirectory "$(Pipeline.Workspace)/powershell_templates/data-lake-file-configuration/CONFIG" -TargetDirectory "CONFIG" -FilesFilter "*.*" -FlattenFiles $false'
+        workingDirectory: '$(Pipeline.Workspace)/powershell_templates/data-lake-file-configuration'

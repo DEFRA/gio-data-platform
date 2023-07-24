@@ -1,0 +1,106 @@
+﻿name: 'V1-E$(envId)-B$(Date:yyyyMMdd)-$(BuildID)'
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - dev
+  paths:
+    include:
+    - infra/synapse/*
+
+parameters:
+  - name: forceDevDeploy
+    displayName: "Deploy to DEV?"
+    type: boolean
+    default: false
+  - name: envId
+    displayName: Only change for additional DEV env.
+    type: string
+    values:
+      - 01
+      - 02
+      - 03
+      - 04
+      - 05
+    default: 01
+
+resources:
+  repositories:
+    - repository: self
+      name: __adoProjectName__/__repoName__
+      type: git
+      ref: ${{ variables['Build.SourceBranch'] }}
+    - repository: gio-data-platform
+      type: github
+      endpoint: DEFRA
+      name: DEFRA/gio-data-platform
+
+variables:
+  envId: ${{ parameters.envId }}
+  prj: __PRJ__
+  prj-lower: __PRJ-LOWER__
+
+extends:
+  template: /templates/defra-common-arm-deploy.yaml@self
+  parameters:
+    ${{ if eq(parameters.envId, '01') }}: 
+      environments:
+        - 'dev'
+        - 'tst'
+        - 'snd'
+    ${{ else }}:
+      environments:
+        - 'dev'
+    
+    templates:
+      - path: infra/synapse
+        name: synapse
+        resourceGroupName: '$(ResourceGroupName)'
+        scope: 'Resource Group'
+        type: 'bicep'
+        preDeployScriptsList:
+          - displayName: 'Setup Sql Admin Credentials for Synapse DW $(prj) KV'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/SQL/CreateSqlServerCredentials.ps1'
+            scriptArguments: '-KeyVaultName "$(KeyVaultName)" -SecretNameSqlUserId "__PRJ__SynapseSql-AdminLogin" -SqlDbUserNameValue "sqladmuser" -SecretNameSqlPassword "__PRJ__SynapseSql-AdminPassword"'
+        postDeployScriptsList:
+          - displayName: 'Resolve Private Endpoint IPs'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/private-link/resolve-endpoint-ips.ps1'
+            scriptArguments: -TemplateOutput '$(azureDeploymentOutputs)' 
+            
+          - displayName: 'Set Private Endpoint DNS'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/private-link/private-endpoint-dns.ps1'
+            scriptArguments: -TemplateOutput '$(templateOutputWithIPs)'
+            serviceConnectionVariableName: 'privateLinkDnsServiceConnection'
+          
+          - displayName: 'Configure Azure Synapse Admins'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/synapse/ConfigureSynapseAdmins.ps1'
+            scriptArguments: '-SynapseWorkspaceName "$(SynapseWorkspaceName)" -SynapseAdminRole "$(sqlServerAadTrdAdminName)" -SynapseAdminRoleId "$(sqlServerAad__PRJ-LOWER__AdminId)" -SynapseRoleName "Synapse Administrator"'
+          
+          - displayName: 'Configure Synapse Data Lake Managed Private Link'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/synapse/ConfigureSynapsePrivateLink.ps1'
+            scriptArguments: '-SynapseWorkspaceName "$(SynapseWorkspaceNameLower)" -PrivateLinkName "synapse-$(SynapseWorkspaceNameLower)-dl-$(StorageAccountNameLower)" -PrivateLinkResourceId "/subscriptions/$(subscriptionId)/resourceGroups/$(ResourceGroupName)/providers/Microsoft.Storage/storageAccounts/$(StorageAccountNameLower)" -PrivateLinkGroup "dfs"'
+
+          - displayName: 'Configure Synapse KeyVault $(prj-lower) Managed Private Link'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/synapse/ConfigureSynapsePrivateLink.ps1'
+            scriptArguments: '-SynapseWorkspaceName "$(SynapseWorkspaceNameLower)" -PrivateLinkName "synapse-$(SynapseWorkspaceNameLower)-kv-$(KeyVaultName)" -PrivateLinkResourceId "/subscriptions/$(subscriptionId)/resourceGroups/$(KeyVaultResourceGroupName)/providers/Microsoft.KeyVault/vaults/$(KeyVaultName)" -PrivateLinkGroup "vault"'
+  
+          - displayName: 'Configure Synapse Selfreferenced Managed Private Link'
+            scriptRepo: gio-data-platform
+            scriptPath: '/src/infrastructure/scripts/PowerShell/Modules/synapse/ConfigureSynapsePrivateLink.ps1'
+            scriptArguments: '-SynapseWorkspaceName "$(SynapseWorkspaceNameLower)" -PrivateLinkName "synapse-$(SynapseWorkspaceNameLower)-synapse-$(SynapseWorkspaceNameLower)" -PrivateLinkResourceId "/subscriptions/$(subscriptionId)/resourceGroups/$(ResourceGroupName)/providers/Microsoft.Synapse/workspaces/$(SynapseWorkspaceNameLower)" -PrivateLinkGroup "dev"'
+            
+    forceDevDeploy: ${{ parameters.forceDevDeploy }}
+    deployToSecondary:  'none'
+    projectName: $(prj)
+    additionalVariablesFileList:
+      - /vars/synapse-{environment}.yaml@self
+    keyVaultName: '$(KeyVaultName)'
+    

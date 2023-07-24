@@ -1,0 +1,41 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "law": {
+      "value": {
+        "name": "#{{ LogAnalyticsWorkspaceName }}",
+        "sku": "PerGB2018",
+        "customTags": {
+            "Name": "#{{ LogAnalyticsWorkspaceName }}",
+            "Purpose": "__PRJ__-LAW"
+        }
+      }
+    },
+    "appInsights": {
+      "value": {
+        "name": "#{{ ApplicationInsightsName }}",
+        "customTags": {
+            "Name": "#{{ ApplicationInsightsName }}",
+            "Purpose": "__PRJ__-APPLICATION-INSIGHTS"
+        }
+      }
+    },
+    "environment": {
+      "value": "#{{ Environment.Name }}"
+    },
+    "actionGroupsOperationsTeamname": {
+      "value": "Operations Team __PRJ__ #{{ Environment.Name }}#{{ envId }}"
+    },
+    "emailReceivers": {
+      "value": [
+
+        {
+          "name": "Email To Operation1_-EmailAction-",
+          "emailAddress": "tobeupdated@fakeplace.com",
+          "useCommonAlertSchema": false
+        }
+      ]
+    }
+  }
+}

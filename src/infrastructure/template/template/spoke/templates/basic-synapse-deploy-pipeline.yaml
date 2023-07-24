@@ -1,0 +1,278 @@
+parameters:
+  - name: forceDevDeploy
+    displayName: Force deployment to DEV
+    type: boolean
+    default: false
+  - name: releaseUpperEnvs
+    displayName: Release to TST, PRE and PRD
+    type: boolean
+    default: false
+  - name: templatePath
+    displayName: Path containing ARM template
+    type: string
+    default: false
+  - name: templateName
+    displayName: Name of ARM template
+    type: string
+    default: false
+  - name: project
+    displayName: Project? Determines resource group for deployment
+    type: string
+    values:
+      - __PRJ__
+  - name: resourceGroupNumber
+    displayName: The number corresponding with the resource group for deployment. Should contain leading 0 (e.g. 02).
+    type: string
+    default: 01
+  - name: resourceGroupType
+    displayName: Resource group category
+    default: INF
+    values:
+      - INF
+  - name: runAzurePowershell
+    type: boolean
+    default: true
+  - name: preDeployScriptsList
+    type: object
+    default: []
+  - name: postDeployScriptsList
+    type: object
+    default: []
+  - name: additionalVariablesFileList
+    displayName: Additional Variables file list
+    type: object
+    default: []
+  - name: additionalEnvVariablesFileList
+    displayName: Additional Environment specific Variables file list
+    type: object
+    default: []
+  - name: filesCopyPath
+    type: string
+    default: ''
+  - name: additionalFilesCopy
+    type: string
+    default: ''
+  - name: environments
+    type: object
+    default:
+      - 'dev'
+      - 'tst'
+      - 'snd'
+      - 'pre'
+      - 'prd'
+  - name: environmentsToRunTests
+    type: object
+    default:
+      - 'dev'
+      - 'tst'
+      - 'snd'
+  - name: deployPreSlot
+    type: boolean
+    default: false
+  - name: deployPrdSlot
+    type: boolean
+    default: false
+  - name: deployToSecondary
+    type: string
+    default: ''
+  - name: secondaryRegionEnvironment
+    type: string
+    default: ''
+  - name: azureRegions
+    type: object
+    default:
+    - 'NorthEurope'
+    - 'WestEurope'
+  - name: runAsPreJob
+    type: boolean
+    default: true
+  - name: targetWorkspaceName
+    displayName: Synapse Workspace Name
+    type: string
+  - name: deleteArtifactsNotInTemplate
+    displayName: Delete artefacts not in the template
+    type: boolean
+    default: false
+  - name: keyVaultNumber
+    type: string
+    default: '01'
+  - name: runTests
+    type : boolean
+    default: true
+  - name: externalTests
+    type : boolean
+    default: true
+  - name: env
+    type : object
+    default : []
+  - name: synapseIncludedFolders
+    type: string
+    default: ''
+  - name: synapseIncludedTypes
+    type: string
+    default: 'Microsoft.Synapse/workspaces/pipelines,Microsoft.Synapse/workspaces/notebooks,Microsoft.Synapse/workspaces/dataflows'
+stages:
+  - stage: Validate
+    variables:
+      - ${{ each file in parameters.additionalVariablesFileList }}:
+        - template: ${{ file }}
+      - ${{ each envfile in parameters.additionalEnvVariablesFileList.DEV }}:
+        - template: ${{ envfile }}
+      - name: addSlot
+        value: false
+      - name: secondaryRegionEnvironment
+        value: ${{ coalesce(parameters.secondaryRegionEnvironment, parameters.deployToSecondary) }}
+
+    pool: DEFRA-COMMON-windows2022-SSV3
+    jobs:
+      - template: /templates/job-templates/validate-copy-synapse-template.yaml
+        parameters:
+          templateName: ${{ parameters.templateName }}
+          templatePath: ${{ parameters.templatePath }}
+          synapseIncludedFolders: ${{ parameters.synapseIncludedFolders }}
+          synapseIncludedTypes: ${{ parameters.synapseIncludedTypes }}
+          project: ${{ parameters.project }}
+          filesCopyPath: ${{ parameters.filesCopyPath }}
+          additionalFilesCopy: ${{ parameters.additionalFilesCopy }}
+          resourceGroupType: ${{ parameters.resourceGroupType }}
+          resourceGroupNumber: ${{ parameters.resourceGroupNumber }}
+
+  - ${{ each env in parameters.environments }}:
+    - stage: ${{ upper(env) }}
+      pool: DEFRA-COMMON-windows2022-SSV3
+      variables:
+        - template: /vars/common.yaml
+        - template: /vars/${{ env }}.yaml
+        - ${{ each file in parameters.additionalVariablesFileList }}:
+          - template: ${{ file }}
+        - ${{ if eq(env, 'dev') }}:
+          - ${{ each envfile in parameters.additionalEnvVariablesFileList.DEV }}:
+            - template: ${{ envfile }}
+        - ${{ if eq(env, 'snd') }}:
+          - ${{ each envfile in parameters.additionalEnvVariablesFileList.SND }}:
+            - template: ${{ envfile }}
+        - ${{ if eq(env, 'tst') }}:
+          - ${{ each envfile in parameters.additionalEnvVariablesFileList.TST }}:
+            - template: ${{ envfile }}
+        - ${{ if eq(env, 'pre') }}:
+          - ${{ each envfile in parameters.additionalEnvVariablesFileList.PRE }}:
+            - template: ${{ envfile }}
+        - ${{ if eq(env, 'prd') }}:
+          - ${{ each envfile in parameters.additionalEnvVariablesFileList.PRD }}:
+            - template: ${{ envfile }}
+        - name: addSlot
+          value: ${{ or(and(eq(env, 'pre'), eq(parameters.deployPreSlot, true)), and(eq(env, 'prd'), eq(parameters.deployPrdSlot, true))) }}
+        - name: secondaryRegionEnvironment
+          value: ${{ coalesce(parameters.secondaryRegionEnvironment, parameters.deployToSecondary) }}
+      ${{ if eq(env, 'dev') }}:
+        dependsOn: Validate
+        condition: and(succeeded(), or(eq(${{ parameters.forceDevDeploy }}, true), in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+      ${{ if eq(env, 'snd') }}:
+        dependsOn: DEV
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), or(in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+      ${{ if eq(env, 'tst') }}:
+        dependsOn: DEV
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), or(in(variables['Build.SourceBranch'], 'refs/heads/dev', 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/heads/hotfix/')))
+      ${{ if eq(env, 'pre') }}:
+        dependsOn: TST
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+      ${{ if eq(env, 'prd') }}:
+        dependsOn: PRE
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'Manual'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+      jobs:
+      - ${{ each region in parameters.azureRegions }}:
+        - ${{ if or(eq(variables.primaryRegion, region), eq(lower(parameters.deployToSecondary), env), and(ne(parameters.deployToSecondary, ''), ne(lower(parameters.deployToSecondary), 'none'), eq(env, 'prd'))) }}:
+          - deployment: Deploy${{ upper(env) }}_${{ region }}
+            workspace:
+              clean: all
+            environment: ${{ upper(env) }}
+            variables:
+              - template: /vars/regional/${{ env }}-${{ lower(region) }}.yaml
+            strategy:
+              runOnce:
+                deploy:
+                  steps:                    
+                    - ${{ if and(eq(parameters.runAzurePowershell, true), ne(length(parameters.preDeployScriptsList), 0) ) }}:
+                      - template: /templates/step-templates/powershell-template.yaml
+                        parameters:
+                          ${{ if ne(parameters.project, 'SEC') }}:
+                            azureResourceManagerConnection: ${{ variables.azureResourceManagerConnection }}
+                            keyVaultName: $(Environment.Name)__PRJ__$(nc-function-infrastructure)$(nc-resource-keyvault)1000
+                          ${{ if eq(parameters.project, 'SEC') }}:
+                            azureResourceManagerConnection: ${{ variables.SECazureResourceManagerConnection }}
+                            keyVaultName: SEC__PRJ__$(Environment.Name)$(nc-resource-keyvault)10${{ parameters.keyVaultNumber }}
+                          scriptsList: ${{ parameters.preDeployScriptsList }}
+
+                    - template: /templates/step-templates/validate-deploy-synapse-template-step.yaml
+                      parameters:
+                        deploy: true
+                        templateName: ${{ parameters.templateName }}
+                        templatePath: $(Pipeline.Workspace)/template
+                        targetWorkspaceName: ${{ parameters.targetWorkspaceName }}
+                        triggersToBeStopped : ${{ variables.triggersToBeStopped }}
+                        deleteArtifactsNotInTemplate: ${{ parameters.deleteArtifactsNotInTemplate }}
+                        ${{ if ne(parameters.project, 'SEC') }}:
+                          resourceGroup: $(Environment.Name)${{ parameters.project }}${{ parameters.resourceGroupType }}$(nc-resource-resourcegroup)$(nc-region-id)${{ parameters.resourceGroupNumber }}
+                          connection: ${{ variables.azureResourceManagerConnection }}
+                        ${{ if eq(parameters.project, 'SEC') }}:
+                          resourceGroup: SEC__PRJ__$(Environment.Name)$(nc-resource-resourcegroup)$(nc-region-id)${{ parameters.resourceGroupNumber }}
+                          connection: ${{ variables.SECazureResourceManagerConnection }}
+
+                    - ${{ if and(eq(parameters.runAzurePowershell, true), ne(length(parameters.postDeployScriptsList), 0) ) }}:
+                      - template: /templates/step-templates/powershell-template.yaml
+                        parameters:
+                          ${{ if ne(parameters.project, 'SEC') }}:
+                            azureResourceManagerConnection: ${{ variables.azureResourceManagerConnection }}
+                            keyVaultName: $(Environment.Name)__PRJ__$(nc-function-infrastructure)$(nc-resource-keyvault)1000
+                          ${{ if eq(parameters.project, 'SEC') }}:
+                            azureResourceManagerConnection: ${{ variables.SECazureResourceManagerConnection }}
+                            keyVaultName: SEC__PRJ__$(Environment.Name)$(nc-resource-keyvault)10${{ parameters.keyVaultNumber }}
+                          scriptsList: ${{ parameters.postDeployScriptsList }}
+                          runAsPreJob: ${{ parameters.runAsPreJob }}
+                          
+          - ${{ if and(eq(parameters.runTests, true), containsValue(parameters.environmentsToRunTests, env) ) }}:   
+            - job: Test${{ upper(env) }}_${{ region }}
+              dependsOn: Deploy${{ upper(env) }}_${{ region }}
+              variables:
+                - template: /vars/regional/${{ env }}-${{ lower(region) }}.yaml
+              timeoutInMinutes: 95
+              steps:
+                - download: current
+                  artifact: tests
+
+                - task: AzureKeyVault@1
+                  displayName: 'Download AKV secrets for PS'
+                  inputs:
+                    azureSubscription: '${{ variables.azureResourceManagerConnection }}'
+                    KeyVaultName: '$(Environment.Name)__PRJ__$(nc-function-infrastructure)$(nc-resource-keyvault)10${{ parameters.keyVaultNumber }}'
+                    SecretsFilter: '*'
+                    RunAsPreJob: true
+
+                - task: AzureKeyVault@1
+                  displayName: 'Download AKV secrets for PS __PRJ__'
+                  inputs:
+                    azureSubscription: '${{ variables.azureResourceManagerConnection }}'
+                    KeyVaultName: '$(Environment.Name)__PRJ__$(nc-function-infrastructure)$(nc-resource-keyvault)1000'
+                    SecretsFilter: '*'
+                    RunAsPreJob: true
+
+                - task: VisualStudioTestPlatformInstaller@1
+                  displayName: 'Visual Studio Test Platform Installer'
+
+                - task: VSTest@2
+                  displayName: 'Execute Acceptance Tests'
+                  ${{ if parameters.env }}:
+                    env:
+                      ${{ each pair in parameters.env}}:
+                        ${{ pair.key }} : ${{ pair.value }}
+                  inputs:
+                    testAssemblyVer2: |
+                      **\*AcceptanceTests.dll
+                      !**/ref/**
+                      !**\*TestAdapter.dll
+                      !**\obj\**
+                      !**\bin\**\ref\**
+                    vsTestVersion: toolsInstaller
+                    searchFolder: '$(Pipeline.Workspace)/tests'
+                    platform: 'any cpu'
+                    configuration: 'release'  

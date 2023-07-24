@@ -1,0 +1,25 @@
+[
+    {
+        "name" : "Folder0", 
+        "permissions" : [
+                {
+                    "type" : "application",
+                    "name" : "__TOREPLACE__",
+                    "permissions" : "rw-"   
+                }
+            ],
+        "directories" : [
+            {
+                "name" : "test",
+                "directories" : [
+                    {
+                        "name" : "test"
+                    }
+                ]
+            },
+            {
+                "name" : "test"                
+            }
+         ] 
+    }    
+]

@@ -1,0 +1,53 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - 'master'
+  paths:
+    include:
+    - template/spoke/*
+
+pool:
+  vmImage: windows-latest
+
+parameters:
+  - name: adoAccountName
+    type: string
+    default: defragovuk
+  - name: adoProjectName
+    type: string
+    default: DEFRA-XXX
+  - name: projectCode
+    type: string
+    default: XXX    
+  - name: namespace
+    type: string
+    default: DEFRA.XXX.Synapse  
+
+
+steps:
+- checkout: self
+  persistCredentials: true
+  
+- task: PowerShell@2
+  displayName : 'Install Template'
+  inputs:
+    targetType: 'inline'
+    script: 'dotnet new install .'
+    workingDirectory: '$(system.defaultworkingdirectory)/template/spoke'
+
+- task: PowerShell@2
+  displayName : 'Create Scaffold temporary directory'
+  inputs:
+    targetType: 'inline'
+    script: 'mkdir ScaffoldTemp'
+    workingDirectory: '$(system.defaultworkingdirectory)'
+
+- task: PowerShell@2
+  displayName : 'Run Scaffold from temp directory'
+  inputs:
+    targetType: 'inline'
+    script: 'dotnet new DEFRA.GIO.Platform.Spoke -n ${{ parameters.namespace}} --namespace ${{ parameters.namespace}} --patToken $(PATToken) --projectCode ${{ parameters.projectCode}} --adoAccountName ${{ parameters.adoAccountName}} --adoProjectName ${{ parameters.adoProjectName}} --allow-scripts yes'
+    pwsh: true
+    workingDirectory: '$(system.defaultworkingdirectory)/ScaffoldTemp'
+    runScriptInSeparateScope: true

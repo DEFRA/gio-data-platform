@@ -1,0 +1,135 @@
+parameters:
+
+  - name: templatePath
+    displayName: Path containing ARM template
+    type: string
+
+  - name: templateName
+    displayName: Name of ARM template
+    type: string
+
+  - name: templateType
+    type: string
+    values:
+      - bicep
+      - json
+    default: json
+
+  - name: deploy
+    displayName: Deploy template? If false, will only validate.
+    type: boolean
+    default: false
+
+  - name: skipWhatIf
+    displayName: Skip PowerShell WhatIf?
+    type: boolean
+    default: true
+
+  - name: location
+    displayName: Azure location
+    type: string
+
+  - name: resourceGroup
+    displayName: Azure Resource Group
+    type: string
+
+  - name: connection
+    displayName: Azure service connection
+    type: string
+
+steps:
+
+  - task: replacetokens@3
+    displayName: Replace Tokens
+    inputs:
+      rootDirectory: ${{ parameters.templatePath }}
+      targetFiles: '**\*.parameters.json;!**\*.transformed.parameters.json => *.transformed.parameters.json'
+      encoding: auto
+      writeBOM: true
+      escapeType: json
+      actionOnMissing: warn
+      keepToken: false
+      tokenPrefix: '#{{'
+      tokenSuffix: '}}'
+      useLegacyPattern: false
+      enableTelemetry: false
+
+  - ${{ if eq(parameters.deploy, false) }}:
+
+    - ${{ if eq(parameters.templateType, 'bicep') }}:   
+
+      - task: AzureCLI@2
+        name: CompileBiceptoARM
+        displayName: 'Lint and Compile Bicep to ARM'
+        inputs:
+          azureSubscription: ${{ parameters.connection }}
+          scriptType: 'pscore'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az bicep install
+            az bicep build --file ${{ parameters.templatePath }}/${{ parameters.templateName }}.bicep
+
+    # - task: AzureCLI@2
+    #   displayName: 'Run ARM Template Tester Toolkit'
+    #   inputs:
+    #     azureSubscription: 'AZD-TRD-DEV1'
+    #     scriptType: 'pscore'
+    #     scriptLocation: 'inlineScript'
+    #     workingDirectory: $(System.DefaultWorkingDirectory)
+    #     inlineScript: |
+    #       Invoke-WebRequest -Uri "https://azurequickstartsservice.blob.core.windows.net/ttk/latest/arm-template-toolkit.zip" -OutFile "arm-template-toolkit.zip"
+    #       Expand-Archive '$(System.DefaultWorkingDirectory)\arm-template-toolkit.zip' '$(System.DefaultWorkingDirectory)\arm-template-toolkit' -Force
+    #       Import-Module $(System.DefaultWorkingDirectory)\arm-template-toolkit\arm-ttk\arm-ttk.psd1
+    #       Test-AzTemplate -TemplatePath ${{ parameters.templatePath }}\${{ parameters.templateName }}.json
+
+    - task: AzureResourceManagerTemplateDeployment@2
+      condition: succeeded()
+      displayName: Validate Template
+      inputs:
+        action: Create Or Update Resource Group
+        azureSubscription: ${{ parameters.connection }}
+        csmFile: ${{ parameters.templatePath }}\${{ parameters.templateName }}.json
+        csmParametersFile: ${{ parameters.templatePath }}\${{ parameters.templateName }}.transformed.parameters.json
+        deploymentMode: Validation
+        deploymentScope: Resource Group
+        location: ${{ parameters.location }}
+        resourceGroupName: ${{ parameters.resourceGroup }}
+
+  - ${{ if eq(parameters.skipWhatIf, false) }}:
+
+    - task: AzurePowerShell@5
+      displayName: Preview with What-If
+      inputs:
+        azureSubscription: ${{ parameters.connection }}
+        azurePowerShellVersion: latestVersion
+        pwsh: true
+        ScriptType: InlineScript
+        Inline: |
+          $parameters = @{
+            ResourceGroupName     = '${{ parameters.resourceGroup }}'
+            Templatefile          = ('{0}\{1}.json' -f '${{ parameters.templatePath }}', '${{ parameters.templateName }}')
+            TemplateParameterfile = ('{0}\{1}.transformed.parameters.json' -f '${{ parameters.templatePath }}', '${{ parameters.templateName }}')
+            Mode                  = 'Incremental'
+          }
+          if ('${{ parameters.deploy }}' -eq 'true'){
+          $parameters.ExcludeChangeType  = 'Ignore'
+          }
+          Import-Module -Name Az.Resources -RequiredVersion 5.6.0
+          $result = Get-AzResourceGroupDeploymentWhatIfResult @parameters
+          $result
+
+  - ${{ if eq(parameters.deploy, true) }}:
+
+    - task: AzureResourceManagerTemplateDeployment@2
+      condition: succeeded()
+      displayName: Deploy Template - $(Environment.Name)
+      inputs:
+        action: Create Or Update Resource Group
+        azureSubscription: ${{ parameters.connection }}
+        csmFile: ${{ parameters.templatePath }}\${{ parameters.templateName }}.json
+        csmParametersFile: ${{ parameters.templatePath }}\${{ parameters.templateName }}.transformed.parameters.json
+        deploymentMode: Incremental
+        deploymentScope: Resource Group
+        location: ${{ parameters.location }}
+        resourceGroupName: ${{ parameters.resourceGroup }}
+        deploymentOutputs: azureDeploymentOutputs

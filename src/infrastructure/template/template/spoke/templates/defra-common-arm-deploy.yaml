@@ -1,0 +1,138 @@
+parameters:
+  - name: templates
+    displayName: List of ARM templates
+    type: object
+  - name: projectName
+    type: string
+  - name: additionalVariablesFileList
+    type: object
+    default: []
+  - name: forceDevDeploy
+    type: boolean
+    default: false
+  - name: keyVaultName
+    type: string
+    default: ''
+  - name: keyVaultSecretsFilter
+    type: string
+    default: ''
+  - name: environments
+    type: object
+    default:
+      - 'dev'
+      - 'tst'
+      - 'snd'
+      - 'pre'
+      - 'prd'
+  - name: bicepModuleRepoName
+    type: string
+    default: 'Defra.Infrastructure.Common'
+  - name: deployToSecondary
+    displayName: "Select Secondary Region"
+    type: string
+    default: ''
+  - name: secondaryRegionEnvironment
+    type: string
+    default: ''  
+
+resources:
+  repositories:
+    - repository: PipelineCommon
+      name: DEFRA-DEVOPS-COMMON/Defra.Pipeline.Common
+      type: git
+      ref: refs/tags/Release-v5-latest
+    - repository: _self
+      name: __adoProjectName__/__repoName__
+      type: git
+      ref: dev
+    - repository: Defra.Infrastructure.Common
+      name: DEFRA-DEVOPS-COMMON/Defra.Infrastructure.Common
+      type: git
+      ref: main
+
+extends:
+  template: /templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
+  parameters:
+    groupedTemplates:
+      - defaultGroup:
+        templates:
+          - ${{ each file in parameters.templates }}:
+            - name:  ${{ file.name}}
+              path:  ${{ file.path}}
+              scope: ${{ file.scope}}
+              type:  ${{ file.type}}
+              resourceName: ${{ file.resourceName}}
+              resourceGroupName: ${{ file.resourceGroupName}}
+              preDeployScriptsList: ${{ file.preDeployScriptsList}}
+              serviceConnectionVariableName: ${{ file.serviceConnectionVariableName}}
+              postDeployServiceConnectionVariableName: ${{ file.postDeployServiceConnectionVariableName}}
+              postDeployScriptsList:
+              - ${{ if file.runPrivateEndpointDns }}:
+                - displayName: Resolve Private Endpoint IP for '${{ file.resourceName }}'
+                  scriptPath: 'Get-ResourcePrivateEndPointsDnsRecordsAsJson.ps1@PipelineCommon'
+                  ScriptArguments: >
+                    -ResourceGroupName '${{ file.resourceGroupName}}'
+                    -ResourceName '${{ file.resourceName }}'
+              
+                - displayName: Set DNS record for '${{ file.resourceName }}'
+                  scriptPath: 'Set-PrivateDnsRecordSet.ps1@PipelineCommon'
+                  serviceConnectionVariableName: 'privateLinkDnsServiceConnection'
+                  ScriptArguments: >
+                    -Ttl 120
+              - ${{ each script in file.postDeployScriptsList }}:
+                - ${{ script }}
+    projectName: ${{ parameters.projectName }}
+    environments:
+      - name: 'dev'
+        serviceConnection: AZD-__PRJ__-DEV1
+        ${{ if ne(parameters.secondaryRegionEnvironment, '') }}:
+          userCustomVariables:
+            - name: secondaryRegionEnvironment
+              value: ${{ parameters.secondaryRegionEnvironment }}
+        deploymentBranches:
+          - 'refs/heads/dev'
+          - 'refs/heads/master'
+        developmentEnvironment: true
+        azureRegions:
+          primary: 'northeurope'
+        isSecondaryRegionDeploymentActive: ${{ eq(lower(parameters.deployToSecondary), 'dev') }}
+      - name: 'tst'
+        serviceConnection: AZD-__PRJ__-TST1
+        ${{ if ne(parameters.secondaryRegionEnvironment, '') }}:
+          userCustomVariables:
+            - name: secondaryRegionEnvironment
+              value: ${{ parameters.secondaryRegionEnvironment }}        
+        deploymentBranches:
+          - 'refs/heads/dev'
+          - 'refs/heads/master'
+        azureRegions:
+          primary: 'northeurope'
+        isSecondaryRegionDeploymentActive: ${{ eq(lower(parameters.deployToSecondary), 'tst') }}
+        dependsOn: 'DEV'
+      - name: 'snd'
+        serviceConnection: AZD-__PRJ__-SND1
+        ${{ if ne(parameters.secondaryRegionEnvironment, '') }}:
+          userCustomVariables:
+            - name: secondaryRegionEnvironment
+              value: ${{ parameters.secondaryRegionEnvironment }}
+        deploymentBranches:
+          - 'refs/heads/dev'
+          - 'refs/heads/master'
+        azureRegions:
+          primary: 'northeurope'
+        isSecondaryRegionDeploymentActive: ${{ eq(lower(parameters.deployToSecondary), 'snd') }}
+        dependsOn: 'DEV' 
+    variableFiles:
+      - /vars/common.yaml@_self
+      - /vars/{environment}.yaml@_self
+      - ${{ each file in parameters.additionalVariablesFileList }}:
+        - ${{ file }}
+    regionalVariableFiles:
+      - /vars/regional/{environment}-{region}.yaml@_self
+    ${{ if containsValue(parameters.templates.*.type, 'bicep') }}:
+      bicepModuleRepoName: ${{ parameters.bicepModuleRepoName }}
+    deployFromFeature: ${{ parameters.forceDevDeploy }}
+    keyVaultName: '${{ parameters.keyVaultName }}'
+    keyVaultSecretsFilter: ${{ parameters.keyVaultSecretsFilter }}
+    privateAgentName : 'DEFRA-COMMON-windows2022-SSV3'
+    
