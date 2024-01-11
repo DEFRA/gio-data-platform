@@ -59,15 +59,16 @@ git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)"
 
 
 #Git Commit
+$TargetRepoUrl = $TargetRepoUrl.Replace("defragovuk",$AdoAccessToken)
 
+git clone $TargetRepoUrl
 
 $branchName = $SourceBranch.Replace("refs/heads/","")
 
 git checkout -b $branchName
 
-$TargetRepoUrl = $TargetRepoUrl.Replace("defragovuk",$AdoAccessToken)
 
-git clone $TargetRepoUrl
+
 
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
