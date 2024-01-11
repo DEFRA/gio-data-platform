@@ -65,6 +65,8 @@ $branchName = $SourceBranch.Replace("refs/heads/","")
 
 git checkout -b $branchName
 
+$TargetRepoUrl = $TargetRepoUrl.Replace("defragovuk",$AdoAccessToken)
+
 git clone $TargetRepoUrl
 
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
