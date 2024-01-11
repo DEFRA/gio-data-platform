@@ -63,4 +63,4 @@ git config --global user.email "QueuedBy"
 git config --global user.name "$QueuedBy"
 git add --all
 git commit -m "Updates"
-git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin --set-upstream origin $branch
+git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin --set-upstream $branch
