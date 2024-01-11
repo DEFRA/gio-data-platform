@@ -38,6 +38,7 @@ resources:
 
 variables:
   gioRepo: $[ resources.repositories.GIO_DATA_PLATFORM.ref ]
+  targetRepoUrl: $[ resources.repositories.GIO_DATA_PLATFORM.url ]
 
 extends:
   template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
@@ -59,4 +60,4 @@ extends:
        - displayName: 'Extract Purview Customisations into local Branch'
          scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ExtractPurviewCustomisations.ps1'
          type: AzurePowerShell
-         scriptArguments: '-RootRepoPath "D:\a\1\s\GIO_DATA_PLATFORM" -FolderPath "D:\a\1\s\GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken)'
+         scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "D:\a\1\s\GIO_DATA_PLATFORM" -FolderPath "D:\a\1\s\GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken)'

@@ -18,7 +18,11 @@ param (
     [string]$QueuedBy,
 
     [Parameter(Mandatory = $true)]
-    [string]$RootRepoPath
+    [string]$RootRepoPath,
+
+    [Parameter(Mandatory = $true)]
+    [string]$TargetRepoUrl
+
 
 )
 
@@ -47,6 +51,13 @@ if($true -ne $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
     }
 }
 
+#Set working directory
+Set-Location -Path "$RootRepoPath"
+
+git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)"
+
+git clone $TargetRepoUrl
+
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
 #Glossaries
@@ -55,17 +66,12 @@ Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
 
 
 #Git Commit
-Set-Location -Path "$RootRepoPath"
 
-$repoName = $SourceBranch.Replace("refs/heads/","")
 
-git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)"
+$branchName = $SourceBranch.Replace("refs/heads/","")
 
-# Fetch changes before switching branches
-#git fetch
+git checkout -b $branchName
 
-# Checkout the branch explicitly, creating it if necessary
-git checkout -B $repoName origin/$repoName
 
 # Configure user details
 git config --global user.email "$QueuedBy"
@@ -73,7 +79,7 @@ git config --global user.name "$QueuedBy"
 
 # Add changes and commit
 git add --all
-git commit -m "Add Purview extraction files to $repoName branch"
+git commit -m "Add Purview extraction files to $branchName branch"
 
 # Push to the specific branch
-push origin $repoName
+push origin $branchName
