@@ -56,13 +56,6 @@ Set-Location -Path "$RootRepoPath"
 
 git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)"
 
-git clone $TargetRepoUrl
-
-Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
-
-#Glossaries
-
-Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
 
 
 #Git Commit
@@ -71,6 +64,14 @@ Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
 $branchName = $SourceBranch.Replace("refs/heads/","")
 
 git checkout -b $branchName
+
+git clone $TargetRepoUrl
+
+Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
+
+#Glossaries
+
+Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
 
 
 # Configure user details
