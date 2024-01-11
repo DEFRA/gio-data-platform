@@ -59,7 +59,9 @@ Set-Location -Path "$RootRepoPath"
 
 $repoName = $SourceBranch.Replace("refs/heads/","")
 
-git checkout $($SourceBranch)
+git fetch
+
+git checkout $repoName
 
 git config --global user.email "$QueuedBy"
 git config --global user.name "$QueuedBy"
