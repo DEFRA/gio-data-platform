@@ -51,39 +51,16 @@ if($true -ne $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
     }
 }
 
-#Set working directory
-Set-Location -Path "$RootRepoPath"
-
-git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)"
-
-
-
-#Git Commit
-$TargetRepoUrl = $TargetRepoUrl.Replace("defragovuk",$AdoAccessToken)
-
-git clone $TargetRepoUrl
-
-$branchName = $SourceBranch.Replace("refs/heads/","")
-
-git checkout -b $branchName
-
-
-
-
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
-#Glossaries
+Set-Location -Path $RootRepoPath
 
-Write-Host "Extracting into $($SourceBranch) under folder $($FolderPath)"
+$repoName = $SourceBranch.Replace("refs/heads/","")
 
+git checkout -b $repoName
 
-# Configure user details
-git config --global user.email "$QueuedBy"
+git config --global user.email "QueuedBy"
 git config --global user.name "$QueuedBy"
-
-# Add changes and commit
 git add --all
-git commit -m "Add Purview extraction files to $branchName branch"
-
-# Push to the specific branch
-git push origin $branchName
+git commit -m "Updates"
+git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin
