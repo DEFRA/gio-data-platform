@@ -82,4 +82,4 @@ git add --all
 git commit -m "Add Purview extraction files to $branchName branch"
 
 # Push to the specific branch
-push origin $branchName
+git push origin $branchName
