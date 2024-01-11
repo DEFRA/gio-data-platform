@@ -59,9 +59,10 @@ Set-Location -Path "$RootRepoPath"
 
 $repoName = $SourceBranch.Replace("refs/heads/","")
 
+git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)"
 
 # Fetch changes before switching branches
-git fetch
+#git fetch
 
 # Checkout the branch explicitly, creating it if necessary
 git checkout -B $repoName origin/$repoName
@@ -75,4 +76,4 @@ git add --all
 git commit -m "Add Purview extraction files to $repoName branch"
 
 # Push to the specific branch
-git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin $repoName
+push origin $repoName
