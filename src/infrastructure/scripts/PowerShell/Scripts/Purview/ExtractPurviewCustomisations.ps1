@@ -55,12 +55,12 @@ Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encodi
 
 Set-Location -Path $RootRepoPath
 
-$repoName = $SourceBranch.Replace("refs/heads/","")
+$branch = $SourceBranch.Replace("refs/heads/","")
 
-git checkout -b $repoName
+git checkout -b $branch
 
 git config --global user.email "QueuedBy"
 git config --global user.name "$QueuedBy"
 git add --all
 git commit -m "Updates"
-git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin
+git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin --set-upstream origin $branch
