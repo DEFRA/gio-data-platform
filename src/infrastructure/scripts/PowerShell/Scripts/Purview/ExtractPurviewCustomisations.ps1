@@ -21,8 +21,13 @@ param (
     [string]$RootRepoPath,
 
     [Parameter(Mandatory = $true)]
-    [string]$TargetRepoUrl
+    [string]$TargetRepoUrl,
 
+    [Parameter(Mandatory = $true)]
+    [string]$AdoProject,
+
+    [Parameter(Mandatory = $true)]
+    [string]$AdoAccountUrl
 
 )
 
@@ -64,3 +69,10 @@ git config --global user.name "$QueuedBy"
 git add --all
 git commit -m "Updates"
 git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin --set-upstream $branch
+
+#ADO Create a PR Automatically
+
+
+$env:AZURE_DEVOPS_EXT_PAT = $AdoAccessToken
+
+az repos pr create --auto-complete true --bypass-policy false --delete-source-branch true --description 'Extracted latest Changes from Purview' ----source-branch $branch --squash true ----target-branch main --title "PR for Purview Config" --project $AdoProject --org $orgUrl
