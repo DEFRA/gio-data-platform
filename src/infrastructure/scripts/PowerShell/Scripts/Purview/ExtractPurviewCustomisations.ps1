@@ -48,7 +48,7 @@ if($true -ne $exportConfig.IncludeRootCollection)
     $collections.value = $collections.value[1..($collections.value.Length - 1)]
 }
 
-if($true -ne $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
+if($true -eq $exportConfig.IgnoreSystemGeneratedFieldsOnImport)
 {
     foreach ($obj in $collections.value) {
         $obj.PSObject.Properties.Remove("systemData")
