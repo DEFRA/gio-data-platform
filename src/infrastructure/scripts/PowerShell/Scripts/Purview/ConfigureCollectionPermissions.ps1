@@ -12,8 +12,6 @@ $jsonFiles = Get-ChildItem -Path $ConfigFilePath -Filter "*.json" -Recurse
 
 $baseUrl = "https://$AccountName.purview.azure.com"
 
-$AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
-
 foreach ($file in $jsonFiles) {
   Write-Host $file.FullName
   $config = Get-Content $file.FullName 
@@ -25,10 +23,10 @@ foreach ($file in $jsonFiles) {
         foreach($permissionGroup in $permission.groupNames)   
         {
           Write-Host "Updating Policy for $permissionGroup"
-          $policy = Get-PurviewPolicyByCollectionName -AccessToken $AccessToken -CollectionName $collection.name -ApiVersion '2021-07-01-preview' -BaseUri $baseUrl
+          $policy = Get-PurviewPolicyByCollectionName -CollectionName $collection.name -ApiVersion '2021-07-01-preview' -BaseUri $baseUrl
          
           #Assign a group to a role
-          Add-PurviewPolicyRole -AccessToken $AccessToken -BaseUri $baseUrl -ApiVersion '2021-07-01-preview' -Policy $policy.values[0] -RoleName $permission.group -GroupId $permissionGroup -CollectionName $collection.name
+          Add-PurviewPolicyRole  -BaseUri $baseUrl -ApiVersion '2021-07-01-preview' -Policy $policy.values[0] -RoleName $permission.group -GroupId $permissionGroup -CollectionName $collection.name
           Write-Host "Added group with id $permissionGroup to the $permissionGroup role"
         }
       }

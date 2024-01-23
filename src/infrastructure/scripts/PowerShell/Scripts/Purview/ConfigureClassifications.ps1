@@ -3,37 +3,33 @@ param (
     [string]$AccountName,
 
     [Parameter(Mandatory = $true)]
-    [string]$ConfigFilePath,
-
-    [Parameter(Mandatory = $true)]
-    [string]$Environment
+    [string]$ConfigFilePath
 )
 
 Import-Module $PSScriptRoot/../../Modules/Purview/PurviewModule.psm1
 $jsonFiles = Get-ChildItem -Path $ConfigFilePath -Filter "*.json" -Recurse
 
 $baseUrl = "https://$AccountName.purview.azure.com"
-$AccessToken = (Get-AzAccessToken -Resource "https://purview.azure.net").Token
 
-#Write-Host $AccessToken
-
-foreach ($file in $jsonFiles) {
+foreach ($file in $jsonFiles) 
+{
   Write-Host $file.FullName
   $config = Get-Content $file.FullName | ConvertFrom-Json
-
-  Write-Host $config
-
-  foreach ($classification in $config.Classifications) 
-  {      
-      Write-Host $classification.Name "----------" $classification.Description
-
-      try 
-      {
-         $existingClassification = Get-Classification -AccessToken $AccessToken -ClassificationName $classification.Name -BaseUri $baseUrl
-      }
-      catch [System.Net.WebException] #Not found
-      {
-         New-Classification -AccessToken $AccessToken -ClassificationName $classification.Name -ClassificationDescription $classification.Description -ApiVersion '2019-11-01-preview' -BaseUri $baseUrl
-      }         
-  }
+    
+  foreach ($classification in $config.classificationDefs) 
+  {   
+        $items = @{
+          classificationDefs = @($classification)
+        }       
+        try
+        {
+          Write-Host "Attempting to Update the Classification"
+          Update-TypeDefinitions -BaseUri $baseUrl -templateDefinition $items -Verb "PUT"
+        }
+        catch [System.Net.WebException] #Not found
+        {
+          Write-Host "Attempting to create the Classification"
+          Update-TypeDefinitions -BaseUri $baseUrl -templateDefinition $items -Verb "POST"
+        }         
+    }
 }

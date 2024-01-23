@@ -83,6 +83,10 @@ extends:
        scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollectionPermissions.ps1'
        type: AzurePowerShell
        scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/Collections/Permissions" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'  
+     - displayName: 'Configure Classifications'
+       scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/COnfigureClassifications.ps1'
+       type: AzurePowerShell
+       scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/$(scriptEnvironment)/TypeDefinitions/classifications.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
      - displayName: 'Configure Glossary'
        scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureGlossaries.ps1'
        type: AzurePowerShell
