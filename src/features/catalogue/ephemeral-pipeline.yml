@@ -73,4 +73,4 @@ extends:
               - displayName: Display Url to User
                 type: AzurePowerShell
                 inlineScript: |
-                  Write-Host "Your ephemeral Url is https://web.purview.azure.com/resource/$env:environmentName?feature.tenant=c9d74090-b4e6-4b04-981d-e6757a160812"
+                  Write-Host "Your ephemeral Url is https://web.purview.azure.com/resource/$(environmentName)?feature.tenant=c9d74090-b4e6-4b04-981d-e6757a160812"
