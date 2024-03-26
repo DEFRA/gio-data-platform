@@ -55,7 +55,7 @@ extends:
                 inlineScript: |
                   $resourceName =  "$(ephemeralNamePrefix)${{ parameters.workItemId }}"
                   Write-Host "Resource Name $resourceName"
-                  Write-Host "##vso[task.setvariable variable=environmentName;]$resourceName"
+                  Write-Host "##vso[task.setvariable variable=ephemeralNamePrefix;]$resourceName"
             postDeployScriptsList:
               - displayName: Add Permission to ephemeral Group
                 type: AzurePowerShell
