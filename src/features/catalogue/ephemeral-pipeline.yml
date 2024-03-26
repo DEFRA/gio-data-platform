@@ -79,7 +79,6 @@ extends:
               - displayName: 'Create Repo for ephemeral work item'
                 type: AzurePowerShell
                 inlineScript: |
-
                   cd "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM"
                   git fetch origin
                   git checkout main
