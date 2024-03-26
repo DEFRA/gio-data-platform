@@ -70,10 +70,11 @@ extends:
          type: AzurePowerShell
          inlineScript: |
                 $jsonFilePath = "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json"
+                Write-Host $jsonFilePath
                 $jsonContent = Get-Content -Path $jsonFilePath | ConvertFrom-Json
                 $token = $jsonContent.tokens | Where-Object { $_.tokenName -eq "accountName" }
 
                 if ($token) {
-                    $token.tokenValue = $(accountName)
+                    $token.tokenValue = "$(accountName)"
                     $jsonContent | ConvertTo-Json | Set-Content -Path $jsonFilePath
                 }
