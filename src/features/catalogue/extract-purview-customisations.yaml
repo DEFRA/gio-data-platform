@@ -67,7 +67,6 @@ extends:
          type: AzurePowerShell
          scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM" -FolderPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM/src/config/catalogue/Extract" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(accountName)" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri)'
        - displayName: 'Replace Tokens in Tokeniser File'
-         scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ExtractPurviewCustomisations.ps1'
          type: AzurePowerShell
          inlineScript: |
                 $jsonFilePath = "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json"
