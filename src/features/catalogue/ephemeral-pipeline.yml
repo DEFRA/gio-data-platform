@@ -53,7 +53,9 @@ extends:
               - displayName: Set the environment name
                 type: AzurePowerShell
                 inlineScript: |
-                  $resourceName =  "$(ephemeralNamePrefix)" + ${{ parameters.workItemId }}
+                  $resourceName =  "$(ephemeralNamePrefix)${{ parameters.workItemId }}"
+                  Write-Host "Resource Name $resourceName"
+
                   Write-Host "##vso[task.setvariable variable=environmentName;]$resourceName"
                   Write-Host $(resourceName)
             postDeployScriptsList:
