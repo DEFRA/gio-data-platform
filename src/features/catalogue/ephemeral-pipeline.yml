@@ -79,8 +79,9 @@ extends:
               - displayName: 'Create Repo for ephemeral work item'
                 type: AzurePowerShell
                 inlineScript: |
+
                   cd "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM"
                   git fetch origin
                   git checkout main
                   git checkout -b feat/${{ parameters.workItemId }}
-                  git push origin feat/${{ parameters.workItemId }}
+                  git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin --set-upstream feat/${{ parameters.workItemId }}
