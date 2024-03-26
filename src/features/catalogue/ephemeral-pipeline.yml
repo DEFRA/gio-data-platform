@@ -22,7 +22,7 @@ resources:
       ref: feat/ephemeral-support
 
 extends:
-  template: /templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
+  template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
   parameters:
     additionalRepositories:
       -  GIO_DATA_PLATFORM
