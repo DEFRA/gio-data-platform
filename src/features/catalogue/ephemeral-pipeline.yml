@@ -76,3 +76,7 @@ extends:
                 type: AzurePowerShell
                 inlineScript: |
                   Write-Host "Your ephemeral Url is https://web.purview.azure.com/resource/$(ephemeralNamePrefix)?feature.tenant=c9d74090-b4e6-4b04-981d-e6757a160812"
+              - displayName: 'Create Repo for ephemeral work item'
+                type: AzurePowerShell
+                inlineScript: |
+                  az repos create --name feat/workItemId --project "$(System.TeamProject)" --parent "main" --repository "GIO_DATA_PLATFORM"
