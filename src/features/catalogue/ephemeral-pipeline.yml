@@ -49,11 +49,15 @@ extends:
             parameterFilePath: src/features/catalogue/infra
             scope: "Resource Group"
             resourceGroupName: $(resourceGroup)
+            preDeployScriptsList:
+              - displayName: Set the environment name
+                type: AzurePowerShell
+                inlineScript: |
+                  $env:environmentName =  "$(ephemeralNamePrefix)" + ${{ parameters.workItemId }}
             postDeployScriptsList:
               - displayName: Add Permission to ephemeral Group
                 type: AzurePowerShell
                 inlineScript: |
-                  $environmentName =  "$(ephemeralNamePrefix)" + ${{ parameters.workItemId }}
                   Write-Host $environmentName
                   Install-Module -Name Az.Purview -Force
                   Import-Module -Name Az.Purview
