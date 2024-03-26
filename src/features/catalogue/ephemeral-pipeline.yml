@@ -79,4 +79,8 @@ extends:
               - displayName: 'Create Repo for ephemeral work item'
                 type: AzurePowerShell
                 inlineScript: |
-                  az repos create --name feat/workItemId --project "$(System.TeamProject)" --parent "main" --repository "GIO_DATA_PLATFORM"
+                  cd "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM"
+                  git fetch origin
+                  git checkout main
+                  git checkout -b feat/${{ parameters.workItemId }}
+                  git push origin feat/${{ parameters.workItemId }}
