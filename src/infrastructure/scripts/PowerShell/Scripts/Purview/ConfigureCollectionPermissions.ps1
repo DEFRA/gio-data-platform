@@ -14,7 +14,7 @@ $baseUrl = "https://$AccountName.purview.azure.com"
 
 foreach ($file in $jsonFiles) {
   Write-Host $file.FullName
-  $config = Get-Content $file.FullName 
+  $config = Get-Content $file.FullName | ConvertFrom-Json
 
   foreach ($collection in $config.collections) 
   {
