@@ -23,9 +23,6 @@ trigger:
   branches:
     include:
       - master
-  paths:
-    include:
-      - DEFRA-CPR-PURVIEW/Security/*
 
 pr:
 - main
