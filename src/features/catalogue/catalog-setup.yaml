@@ -22,10 +22,13 @@ trigger:
   batch: true
   branches:
     include:
-      - master
+      - main
 
 pr:
-- main
+  branches:
+    include:
+    - features/*
+    - feat/*
 
 resources:
   repositories:
