@@ -28,7 +28,7 @@ Use Azure DevOps to create the work Item (Note down the number as this is useful
 
 ## Step 2 - Spin up your ephemeral and grab the output url at the end
 
-Supply the work item Id as mentioned above and [Run the Ephemeral](https://dev.azure.com/defragovuk/DEFRA-Common-Platform-Improvements/_build/results?buildId=512144&view=results)
+Supply the work item Id as mentioned above and Run the Ephemeral Pipeline
 
 ## Step 3 - Open the ephemeral environment at https://web.purview.com
 
