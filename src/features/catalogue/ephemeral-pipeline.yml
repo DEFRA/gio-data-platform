@@ -44,7 +44,7 @@ extends:
         privateAgentName: DEFRA-COMMON-windows2022-SSV3
     groupedDeployments:
       - name: Purview_Ephemeral_infra
-        templates:
+        deployments:
           - name: purview
             isDeployToSecondaryRegions: false
             path: src/features/catalogue/infra
