@@ -23,7 +23,7 @@ resources:
     - repository: GIO_DATA_PLATFORM
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
-      ref: main
+      ref: feat/366609-pureview-improvements
 
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
