@@ -17,6 +17,7 @@ resources:
   repositories:
     - repository: PipelineCommon
       name: DEFRA/ado-pipeline-common
+      endpoint: DEFRA
       type: github
       ref: refs/tags/1.0.0
     - repository: GIO_DATA_PLATFORM
