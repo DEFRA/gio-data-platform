@@ -31,7 +31,6 @@ extends:
     additionalRepositories:
       -  GIO_DATA_PLATFORM
     variableFiles:
-      - /vars/common.yaml@GIO_DATA_PLATFORM
       - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     deployFromFeature: ${{ parameters.deployToDevelopmentEnvironment }}
     privateAgentName: DEFRA-COMMON-windows2022-SSV3
