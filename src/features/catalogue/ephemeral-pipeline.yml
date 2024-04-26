@@ -16,9 +16,9 @@ parameters:
 resources:
   repositories:
     - repository: PipelineCommon
-      name: DEFRA-DEVOPS-COMMON/Defra.Pipeline.Common
-      type: git
-      ref: refs/tags/Release-v6.0.12
+      name: DEFRA/ado-pipeline-common
+      type: github
+      ref: refs/tags/1.0.0
     - repository: GIO_DATA_PLATFORM
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
