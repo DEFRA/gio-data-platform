@@ -17,7 +17,7 @@ resources:
       name: DEFRA/ado-pipeline-common
       endpoint: DEFRA
       type: github
-      ref: refs/tags/1.0.0
+      ref: features/addCommonScriptDeployTemplate
     - repository: GIO_DATA_PLATFORM
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
@@ -37,7 +37,7 @@ extends:
       - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     deployFromFeature: true
     environments:
-      - name: 'DP_DEV'
+      - name: 'Ephemeral'
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
