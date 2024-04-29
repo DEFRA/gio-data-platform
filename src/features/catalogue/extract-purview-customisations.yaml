@@ -1,23 +1,6 @@
 name: $(BuildID)
 
 parameters:
-  - name: whatIf
-    displayName: PowerShell WhatIf Comparison
-    type: boolean
-    default: true
-
-  - name: deploy
-    displayName: "Deployment"
-    type: boolean
-    default: false
-
-  - name: region
-    displayName: "Region"
-    type: string
-    default: uksouth
-    values:
-      - uksouth
-
   - name: workItemId
     displayName: "Work Item Id"
     type: string
@@ -51,20 +34,20 @@ extends:
     additionalRepositories:
       -  GIO_DATA_PLATFORM
     variableFiles:
-      - /vars/common.yaml@GIO_DATA_PLATFORM
-      - src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
+      - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
+    deployFromFeature: true
     environments:
-      - name: 'DP_DEV'
+      - name: 'Ephemeral'
+        developmentEnvironment: True
+        useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: uksouth
-        developmentEnvironment: true
-        deploymentBranches:
-          - '*'
+          primary: NorthEurope
         serviceConnection: AZD-CPR-DEV1
+        privateAgentName: DEFRA-COMMON-windows2022-SSV3
     groupedDeployments:
-      - name: Purview_Ephemeral_infra
+      - name: Purview_Ephemeral_Extract
         deployments:
-          - name: extract-purview-customisations
+          - name: purview
             isDeployToSecondaryRegions: false
             type: script
             scriptsList:
