@@ -37,7 +37,7 @@ extends:
       - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     deployFromFeature: true
     environments:
-      - name: 'Ephemeral'
+      - name: 'DP_DEV'
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
