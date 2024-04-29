@@ -72,5 +72,5 @@ extends:
                 scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM" -FolderPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM/src/config/catalogue/Extract" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(accountName)" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri)'
               - ${{ if eq(parameters.deleteEphemeral, True) }}:
                 - displayName: 'Delete Ephemeral after extract'
-                inlineScript: 'az resource delete -g $(resourceGroup) -n $(accountName) --resource-type "Microsoft.Purview/accounts" --no-wait'
-                type: AzureCLI
+                  inlineScript: 'az resource delete -g $(resourceGroup) -n $(accountName) --resource-type "Microsoft.Purview/accounts" --no-wait'
+                  type: AzureCLI
