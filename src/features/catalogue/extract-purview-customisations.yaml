@@ -1,6 +1,10 @@
 name: $(BuildID)
 
 parameters:
+  - name: configProjectName
+    displayName: "Configuration Project Name"
+    type: string
+    default: 'DEFRA-Common-Platform-Improvements'
   - name: configRepositoryName
     displayName: "Configuration Repository Name"
     type: string
@@ -25,7 +29,7 @@ resources:
       type: github
       ref: refs/tags/1.0.0
     - repository: ConfigRepository
-      name: $(System.TeamProject)/${{ parameters.configRepositoryName }}
+      name: ${{ parameters.configProjectName }}/${{ parameters.configRepositoryName }}
       type: git
       ref: feat/${{ parameters.workItemId }}
 
