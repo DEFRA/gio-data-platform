@@ -10,8 +10,6 @@ parameters:
     type: string
     default: 'XXXXXX'
 
-pool: DEFRA-COMMON-windows2022-SSV3
-
 trigger: none
 pr: none
 

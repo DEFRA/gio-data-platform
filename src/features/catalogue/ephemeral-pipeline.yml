@@ -29,7 +29,6 @@ extends:
     variableFiles:
       - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     deployFromFeature: True
-    privateAgentName: DEFRA-COMMON-windows2022-SSV3
     environments:
       - name: 'Ephemeral'
         developmentEnvironment: True
@@ -37,7 +36,6 @@ extends:
         azureRegions:
           primary: NorthEurope
         serviceConnection: AZD-CPR-DEV1
-        privateAgentName: DEFRA-COMMON-windows2022-SSV3
     groupedDeployments:
       - name: Purview_Ephemeral_infra
         deployments:
