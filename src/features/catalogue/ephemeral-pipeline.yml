@@ -58,7 +58,7 @@ extends:
                 type: AzurePowerShell
                 inlineScript: |
                   Write-Host $(ephemeralNamePrefix)
-                  Install-Module -Name Az.Purview -Force
+                  Install-Module -Name Az.Purview -RequiredVersion "0.2.0" -Force
                   Import-Module -Name Az.Purview
                   Add-AzPurviewAccountRootCollectionAdmin -AccountName $(ephemeralNamePrefix) -ResourceGroupName $(resourceGroup) -ObjectId $(adminGroupId)
               - displayName: 'Configure Collections'
