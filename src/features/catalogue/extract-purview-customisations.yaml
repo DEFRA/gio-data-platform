@@ -21,7 +21,7 @@ resources:
       name: DEFRA/ado-pipeline-common
       endpoint: DEFRA
       type: github
-      ref: features/addCommonScriptDeployTemplate
+      ref: refs/tags/1.0.0
     - repository: GIO_DATA_PLATFORM
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
@@ -50,13 +50,11 @@ extends:
     groupedDeployments:
       - name: Purview_Ephemeral_Extract
         deployments:
-          - name: purview
+          - name: 'Replace Tokens in Tokeniser File'
             isDeployToSecondaryRegions: false
             type: script
-            scriptsList:
-              - displayName: 'Replace Tokens in Tokeniser File'
-                type: AzurePowerShell
-                inlineScript: |
+            scriptType: AzurePowerShell
+            inlineScript: |
                         $jsonFilePath = "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json"
                         Write-Host $jsonFilePath
                         $jsonContent = Get-Content -Path $jsonFilePath | ConvertFrom-Json
@@ -66,11 +64,15 @@ extends:
                             $token.tokenValue = "$(accountName)"
                             $jsonContent | ConvertTo-Json | Set-Content -Path $jsonFilePath
                         }
-              - displayName: 'Extract Purview Customisations into local Branch and Create Automatic PR'
-                scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ExtractPurviewCustomisations.ps1'
-                type: AzurePowerShell
-                scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM" -FolderPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM/src/config/catalogue/Extract" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(accountName)" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri)'
-              - ${{ if eq(parameters.deleteEphemeral, True) }}:
-                - displayName: 'Delete Ephemeral after extract'
-                  inlineScript: 'az resource delete -g $(resourceGroup) -n $(accountName) --resource-type "Microsoft.Purview/accounts" --no-wait'
-                  type: AzureCLI
+          - name: 'Extract Purview Customisations into local Branch and Create Automatic PR'
+            isDeployToSecondaryRegions: false
+            type: script
+            scriptType: AzurePowerShell
+            path: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ExtractPurviewCustomisations.ps1'
+            scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM" -FolderPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM/src/config/catalogue/Extract" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(accountName)" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri)'
+          - ${{ if eq(parameters.deleteEphemeral, True) }}:
+            - name: 'Delete Ephemeral after extract'
+              isDeployToSecondaryRegions: false
+              type: script
+              scriptType: AzureCLI
+              inlineScript: 'az resource delete -g $(resourceGroup) -n $(accountName) --resource-type "Microsoft.Purview/accounts" --no-wait'
