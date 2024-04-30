@@ -1,10 +1,6 @@
 name: $(BuildID)
 
 parameters:
-  - name: configRepositoryName
-    displayName: "Configuration Repository Name"
-    type: string
-    default: 'GIO_DATA_PLATFORM'
   - name: deleteEphemeral
     displayName: " Delete Ephemeral Env after extract"
     type: boolean
@@ -13,6 +9,8 @@ parameters:
     displayName: "Work Item Id"
     type: string
     default: 'XXXXXX'
+
+pool: DEFRA-COMMON-windows2022-SSV3
 
 trigger: none
 pr: none
@@ -24,26 +22,24 @@ resources:
       endpoint: DEFRA
       type: github
       ref: refs/tags/1.0.0
-    - repository: ConfigRepository
-      name: $(System.TeamProject)/${{ parameters.configRepositoryName }}
+    - repository: GIO_DATA_PLATFORM
+      name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
       ref: feat/${{ parameters.workItemId }}
 
 variables:
-  configRepositoryName: ${{ parameters.configRepositoryName }}
-  configRepositoryBranch: $[ resources.repositories.ConfigRepository.ref ]
-  configRepositoryUrl: $[ resources.repositories.ConfigRepository.url ]
+  gioRepo: $[ resources.repositories.GIO_DATA_PLATFORM.ref ]
+  targetRepoUrl: $[ resources.repositories.GIO_DATA_PLATFORM.url ]
   accountName: $(ephemeralNamePrefix)${{ parameters.workItemId }}
 
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
   parameters:
     additionalRepositories:
-      -  ConfigRepository
+      -  GIO_DATA_PLATFORM
     variableFiles:
-      - /src/config/catalogue/vars/ephemeral.yaml@ConfigRepository
+      - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     deployFromFeature: true
-    privateAgentName: DEFRA-COMMON-windows2022-SSV3
     environments:
       - name: 'Ephemeral'
         developmentEnvironment: True
@@ -51,7 +47,6 @@ extends:
         azureRegions:
           primary: NorthEurope
         serviceConnection: AZD-CPR-DEV1
-        privateAgentName: DEFRA-COMMON-windows2022-SSV3
     groupedDeployments:
       - name: Purview_Ephemeral_Extract
         deployments:
@@ -60,7 +55,7 @@ extends:
             type: script
             scriptType: AzurePowerShell
             inlineScript: |
-                        $jsonFilePath = "$(Build.SourcesDirectory)/ConfigRepository/src/config/catalogue/importConfig.json"
+                        $jsonFilePath = "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json"
                         Write-Host $jsonFilePath
                         $jsonContent = Get-Content -Path $jsonFilePath | ConvertFrom-Json
                         $token = $jsonContent.tokens | Where-Object { $_.tokenName -eq "accountName" }
@@ -74,7 +69,7 @@ extends:
             type: script
             scriptType: AzurePowerShell
             path: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ExtractPurviewCustomisations.ps1'
-            scriptArguments: '-TargetRepoUrl $(configRepositoryUrl) -RootRepoPath "$(Build.SourcesDirectory)\ConfigRepository" -FolderPath "$(Build.SourcesDirectory)\ConfigRepository/src/config/catalogue/Extract" -ExportSettings "$(Build.SourcesDirectory)/ConfigRepository/src/config/catalogue/exportConfig.json" -AccountName "$(accountName)" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(configRepositoryBranch)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri) -AdoRepositoryName $(configRepositoryName)'
+            scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM" -FolderPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM/src/config/catalogue/Extract" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(accountName)" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri)'
           - ${{ if eq(parameters.deleteEphemeral, True) }}:
             - name: 'Delete Ephemeral after extract'
               isDeployToSecondaryRegions: false
