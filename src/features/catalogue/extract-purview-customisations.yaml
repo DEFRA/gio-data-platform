@@ -1,10 +1,6 @@
 name: $(BuildID)
 
 parameters:
-  - name: configProjectName
-    displayName: "Configuration Project Name"
-    type: string
-    default: 'DEFRA-Common-Platform-Improvements'
   - name: configRepositoryName
     displayName: "Configuration Repository Name"
     type: string
@@ -29,7 +25,7 @@ resources:
       type: github
       ref: refs/tags/1.0.0
     - repository: ConfigRepository
-      name: ${{ parameters.configProjectName }}/${{ parameters.configRepositoryName }}
+      name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
       ref: feat/${{ parameters.workItemId }}
 
