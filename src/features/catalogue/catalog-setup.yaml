@@ -5,6 +5,10 @@ parameters:
     displayName: "Agent pool name"
     type: string
     default: 'DEFRA-COMMON-windows2022-SSV3'
+  - name: primaryRegion
+    displayName: "Primary region"
+    type: string
+    default: 'NorthEurope'
 
 trigger:
   batch: true
@@ -41,26 +45,26 @@ extends:
     environments:
       - name: 'DP_DEV'
         azureRegions:
-          primary: ${{ variables.location }}
+          primary: ${{ parameters.primaryRegion }}
         developmentEnvironment: true
         deploymentBranches:
           - '*'
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
       - name: 'DP_TST'
         azureRegions:
-          primary: ${{ variables.location }}
+          primary: ${{ parameters.primaryRegion }}
         deploymentBranches:
           - '*'    
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
       - name: 'DP_PRE'
         azureRegions:
-          primary: ${{ variables.location }}
+          primary: ${{ parameters.primaryRegion }}
         deploymentBranches:
           - '*'
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
       - name: 'DP_PRD'
         azureRegions:
-          primary: ${{ variables.location }}
+          primary: ${{ parameters.primaryRegion }}
         deploymentBranches:
           - '*'
         serviceConnection: ${{ variables.azureResourceManagerConnection }}

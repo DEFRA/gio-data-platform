@@ -16,7 +16,7 @@ parameters:
   - name: workItemId
     displayName: "Work Item Id"
     type: string
-    default: '366609'
+    default: '12345'
 
 trigger: none
 pr: none
