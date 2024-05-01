@@ -12,10 +12,11 @@ parameters:
   - name: environments
     type: object
     default:
-      - 'DP_DEV'
-      - 'DP_TST'
-      - 'DP_PRE'
-      - 'DP_PRD'
+      - 'dp_dev'
+      - 'dp_tst'
+      - 'dp_pre'
+      - 'dp_prd'
+
 trigger:
   batch: true
   branches:
@@ -50,14 +51,14 @@ extends:
       - /vars/{environment}.yaml@GIO_DATA_PLATFORM
     environments:
       - ${{ each env in parameters.environments }}:
-        - name: ${{ upper(env) }}
-        azureRegions:
-          primary: ${{ parameters.primaryRegion }}
-        deploymentBranches:
-          - '*'
-        serviceConnection: ${{ variables.azureResourceManagerConnection }}
-        ${{ if in(upper(env), 'DEV') }}:
-          developmentEnvironment: True
+        - name: ${{ env }}
+          azureRegions:
+            primary: ${{ parameters.primaryRegion }}
+          deploymentBranches:
+            - '*'
+          serviceConnection: ${{ variables.azureResourceManagerConnection }}
+          ${{ if in(upper(env), 'DEV') }}:
+            developmentEnvironment: True
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
       - name: Purview_Deployment
