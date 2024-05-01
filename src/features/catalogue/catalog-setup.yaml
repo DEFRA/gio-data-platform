@@ -89,7 +89,7 @@ extends:
          - name: 'Configure Classifications'
            serviceConnectionVariableName: azureResourceManagerConnection
            isDeployToSecondaryRegions: false
-           path: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/COnfigureClassifications.ps1'
+           path: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureClassifications.ps1'
            type: script
            scriptType: AzurePowerShell
            scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/TypeDefinitions/classifications.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
