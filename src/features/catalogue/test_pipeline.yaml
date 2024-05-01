@@ -48,26 +48,12 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: UkSouth
-        serviceConnection: AZD-CPR-DEV1
-    privateAgentName: DEFRA-COMMON-windows2022-SSV3
+          primary: NorthEurope
+        serviceConnection: ${{ variables.azureResourceManagerConnection }}
+    privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
       - name: TestScripts
         deployments:
-          - name: 'script 1'
-            serviceConnectionVariableName: azureResourceManagerConnection
-            isDeployToSecondaryRegions: false
-            type: script
-            scriptType: AzurePowerShell
-            inlineScript: |
-                    Write-Host "Script 1"
-          - name: 'script 2'
-            serviceConnectionVariableName: azureResourceManagerConnection
-            isDeployToSecondaryRegions: false
-            type: script
-            scriptType: AzurePowerShell
-            inlineScript: |
-                    Write-Host "Script 2"
           - name: 'Replace Tokens in Tokeniser File'
             serviceConnectionVariableName: azureResourceManagerConnection
             isDeployToSecondaryRegions: false
