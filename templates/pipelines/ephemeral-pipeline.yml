@@ -19,10 +19,6 @@ resources:
       endpoint: DEFRA
       type: github
       ref: refs/tags/1.0.0
-    - repository: GIO_DATA_PLATFORM
-      name: GIO_DATA_PLATFORM
-      type: git
-      ref: main
 
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
