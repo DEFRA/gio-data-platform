@@ -4,6 +4,10 @@ trigger: none
 pr: none
 
 parameters:
+  - name: privateAgentName
+    displayName: "Agent pool name"
+    type: string
+    default: 'DEFRA-COMMON-windows2022-SSV3'
   - name: workItemId
     displayName: "The id of the work item (This will be used in the environment name)"
     type: string
@@ -19,7 +23,7 @@ resources:
     - repository: GIO_DATA_PLATFORM
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
-      ref: feat/366609-pureview-improvements
+      ref: main
 
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
@@ -36,7 +40,7 @@ extends:
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
           primary: NorthEurope
-    privateAgentName: $(privateAgentName)
+    privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
       - name: Purview_Ephemeral_infra
         deployments:

@@ -1,6 +1,10 @@
 name: $(BuildID)
 
 parameters:
+  - name: privateAgentName
+    displayName: "Agent pool name"
+    type: string
+    default: 'DEFRA-COMMON-windows2022-SSV3'
 
 trigger:
   batch: true
@@ -24,6 +28,7 @@ resources:
     - repository: GIO_DATA_PLATFORM
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
+      ref: main
   
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
@@ -55,7 +60,7 @@ extends:
           primary: uksouth
         deploymentBranches:
           - '*'
-    privateAgentName: $(privateAgentName)
+    privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
       - name: Purview_Deployment
         deployments:

@@ -1,6 +1,10 @@
 name: $(BuildID)
 
 parameters:
+  - name: privateAgentName
+    displayName: "Agent pool name"
+    type: string
+    default: 'DEFRA-COMMON-windows2022-SSV3'
   - name: deleteEphemeral
     displayName: " Delete Ephemeral Env after extract"
     type: boolean
@@ -45,7 +49,7 @@ extends:
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
           primary: NorthEurope
-    privateAgentName: $(privateAgentName)
+    privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
       - name: Purview_Ephemeral_Extract
         deployments:
