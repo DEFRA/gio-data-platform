@@ -1,22 +1,6 @@
 name: $(BuildID)
 
 parameters:
-  - name: whatIf
-    displayName: PowerShell WhatIf Comparison
-    type: boolean
-    default: true
-
-  - name: deploy
-    displayName: "Deployment"
-    type: boolean
-    default: false
-
-  - name: region
-    displayName: "Region"
-    type: string
-    default: uksouth
-    values:
-      - uksouth
 
 trigger:
   batch: true
@@ -33,21 +17,22 @@ pr:
 resources:
   repositories:
     - repository: PipelineCommon
-      name: DEFRA-DEVOPS-COMMON/Defra.Pipeline.Common
-      type: git
-      ref: main
+      name: DEFRA/ado-pipeline-common
+      endpoint: DEFRA
+      type: github
+      ref: refs/tags/1.0.0
     - repository: GIO_DATA_PLATFORM
       name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
       type: git
   
 extends:
-  template: /templates/pipelines/common-scripts-deploy.yaml@PipelineCommon
+  template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
   parameters:
     additionalRepositories:
       -  GIO_DATA_PLATFORM
     variableFiles:
       - /vars/common.yaml@GIO_DATA_PLATFORM
-      - /vars/{environment}.uksouth.yaml@GIO_DATA_PLATFORM
+      - /vars/{environment}.yaml@GIO_DATA_PLATFORM
     environments:
       - name: 'DP_DEV'
         azureRegions:
@@ -55,39 +40,49 @@ extends:
         developmentEnvironment: true
         deploymentBranches:
           - '*'
-        serviceConnection: AZD-CPR-DEV1
       - name: 'DP_TST'
         azureRegions:
           primary: uksouth
         deploymentBranches:
-          - '*'
-        serviceConnection: AZD-CPR-TST1        
+          - '*'    
       - name: 'DP_PRE'
         azureRegions:
           primary: uksouth
         deploymentBranches:
           - '*'
-        serviceConnection: AZR-CPR-PRE1
       - name: 'DP_PRD'
         azureRegions:
           primary: uksouth
         deploymentBranches:
           - '*'
-        serviceConnection: AZR-CPR-PRD1
-    scriptsList:   
-     - displayName: 'Configure Collections'
-       scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
-       type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/collections.json" -ImportConfigPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
-     - displayName: 'Configure Collection Permissions'
-       scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollectionPermissions.ps1'
-       type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/Permissions/$(scriptEnvironment)" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'  
-     - displayName: 'Configure Classifications'
-       scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/COnfigureClassifications.ps1'
-       type: AzurePowerShell
-       scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/TypeDefinitions/classifications.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
-  #   - displayName: 'Configure Glossary'
-  #     scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureGlossaries.ps1'
-  #     type: AzurePowerShell
-  #     scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Glossaries" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
+    privateAgentName: $(privateAgentName)
+    groupedDeployments:
+      - name: Purview_Deployment
+        deployments:
+         - name: 'Configure Collections'
+           serviceConnectionVariableName: azureResourceManagerConnection
+           isDeployToSecondaryRegions: false
+           scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
+           type: script
+           scriptType: AzurePowerShell
+           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/collections.json" -ImportConfigPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
+         - name: 'Configure Collection Permissions'
+           serviceConnectionVariableName: azureResourceManagerConnection
+           isDeployToSecondaryRegions: false
+           scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollectionPermissions.ps1'
+           type: script
+           scriptType: AzurePowerShell
+           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/Permissions/$(scriptEnvironment)" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'  
+         - name: 'Configure Classifications'
+           serviceConnectionVariableName: azureResourceManagerConnection
+           isDeployToSecondaryRegions: false
+           scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/COnfigureClassifications.ps1'
+           type: script
+           scriptType: AzurePowerShell
+           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/TypeDefinitions/classifications.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
+      #   - name: 'Configure Glossary'
+      #     serviceConnectionVariableName: azureResourceManagerConnection
+      #     isDeployToSecondaryRegions: false
+      #     scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureGlossaries.ps1'
+      #     scriptType: AzurePowerShell
+      #     scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Glossaries" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'

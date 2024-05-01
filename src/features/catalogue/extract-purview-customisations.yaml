@@ -36,6 +36,7 @@ extends:
     additionalRepositories:
       -  GIO_DATA_PLATFORM
     variableFiles:
+      - /vars/common.yaml@GIO_DATA_PLATFORM
       - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     deployFromFeature: true
     environments:
@@ -44,11 +45,12 @@ extends:
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
           primary: NorthEurope
-        serviceConnection: AZD-CPR-DEV1
+    privateAgentName: $(privateAgentName)
     groupedDeployments:
       - name: Purview_Ephemeral_Extract
         deployments:
           - name: 'Replace Tokens in Tokeniser File'
+            serviceConnectionVariableName: azureResourceManagerConnection
             isDeployToSecondaryRegions: false
             type: script
             scriptType: AzurePowerShell
@@ -63,6 +65,7 @@ extends:
                             $jsonContent | ConvertTo-Json | Set-Content -Path $jsonFilePath
                         }
           - name: 'Extract Purview Customisations into local Branch and Create Automatic PR'
+            serviceConnectionVariableName: azureResourceManagerConnection
             isDeployToSecondaryRegions: false
             type: script
             scriptType: AzurePowerShell
@@ -70,6 +73,7 @@ extends:
             scriptArguments: '-TargetRepoUrl $(targetRepoUrl) -RootRepoPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM" -FolderPath "$(Build.SourcesDirectory)\GIO_DATA_PLATFORM/src/config/catalogue/Extract" -ExportSettings "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/exportConfig.json" -AccountName "$(accountName)" -QueuedBy "$(Build.QueuedBy)" -SourceBranch "$(gioRepo)" -AdoAccessToken $(System.AccessToken) -AdoProject $(System.TeamProject) -AdoAccountUrl $(System.CollectionUri)'
           - ${{ if eq(parameters.deleteEphemeral, True) }}:
             - name: 'Delete Ephemeral after extract'
+              serviceConnectionVariableName: azureResourceManagerConnection
               isDeployToSecondaryRegions: false
               type: script
               scriptType: AzureCLI

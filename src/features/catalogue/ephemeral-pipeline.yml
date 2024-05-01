@@ -27,6 +27,7 @@ extends:
     additionalRepositories:
       -  GIO_DATA_PLATFORM
     variableFiles:
+      - /vars/common.yaml@GIO_DATA_PLATFORM
       - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     deployFromFeature: True
     environments:
@@ -35,11 +36,12 @@ extends:
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
           primary: NorthEurope
-        serviceConnection: AZD-CPR-DEV1
+    privateAgentName: $(privateAgentName)
     groupedDeployments:
       - name: Purview_Ephemeral_infra
         deployments:
           - name: purview
+            serviceConnectionVariableName: azureResourceManagerConnection
             isDeployToSecondaryRegions: false
             path: src/features/catalogue/infra
             type: bicep
