@@ -8,7 +8,7 @@ parameters:
   - name: primaryRegion
     displayName: "Primary region"
     type: string
-    default: 'NorthEurope'
+    default: 'UKSouth'
   - name: environments
     type: object
     default:
