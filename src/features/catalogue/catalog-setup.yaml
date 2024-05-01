@@ -43,26 +43,26 @@ extends:
       - /vars/common.yaml@GIO_DATA_PLATFORM
       - /vars/{environment}.yaml@GIO_DATA_PLATFORM
     environments:
-      - name: 'DP_DEV'
+      - name: 'dp_dev'
         azureRegions:
           primary: ${{ parameters.primaryRegion }}
         developmentEnvironment: true
         deploymentBranches:
           - '*'
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
-      - name: 'DP_TST'
+      - name: 'dp_tst'
         azureRegions:
           primary: ${{ parameters.primaryRegion }}
         deploymentBranches:
           - '*'    
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
-      - name: 'DP_PRE'
+      - name: 'dp_pre'
         azureRegions:
           primary: ${{ parameters.primaryRegion }}
         deploymentBranches:
           - '*'
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
-      - name: 'DP_PRD'
+      - name: 'dp_prd'
         azureRegions:
           primary: ${{ parameters.primaryRegion }}
         deploymentBranches:
