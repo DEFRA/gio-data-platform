@@ -5,6 +5,10 @@ parameters:
     displayName: "Agent pool name"
     type: string
     default: 'DEFRA-COMMON-windows2022-SSV3'
+  - name: primaryRegion
+    displayName: "Primary region"
+    type: string
+    default: 'NorthEurope'
   - name: deleteEphemeral
     displayName: " Delete Ephemeral Env after extract"
     type: boolean
@@ -48,11 +52,11 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: ${{ variables.location }}
+          primary: ${{ parameters.primaryRegion }}
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
-      - name: Purview_Ephemeral_Extract
+      - name: Purview_Extract
         deployments:
           - name: 'Replace Tokens in Tokeniser File'
             serviceConnectionVariableName: azureResourceManagerConnection
