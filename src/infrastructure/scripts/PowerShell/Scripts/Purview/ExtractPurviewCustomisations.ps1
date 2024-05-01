@@ -103,4 +103,4 @@ git -c http.extraheader="AUTHORIZATION: bearer $($AdoAccessToken)" push origin -
 #ADO Create a PR Automatically
 $env:AZURE_DEVOPS_EXT_PAT = $AdoAccessToken
 
-az repos pr create --auto-complete false --bypass-policy false --delete-source-branch true --description 'Extracted latest Changes from Purview' --source-branch $branch --squash true --target-branch main --title "PR for Purview Config" --project $AdoProject --org $AdoAccountUrl --repository "GIO_DATA_PLATFORM"
+az repos pr create --auto-complete false --bypass-policy false --delete-source-branch true --description 'Extracted latest Changes from Purview' --source-branch $branch --squash true --target-branch main --title "PR for Purview Config $AccountName" --project $AdoProject --org $AdoAccountUrl --repository "GIO_DATA_PLATFORM"
