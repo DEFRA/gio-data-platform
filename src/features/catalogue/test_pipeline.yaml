@@ -1,0 +1,44 @@
+name: $(BuildID)
+
+parameters:
+
+trigger: none
+pr: none
+
+resources:
+  repositories:
+    - repository: PipelineCommon
+      name: DEFRA/ado-pipeline-common
+      endpoint: DEFRA
+      type: github
+      ref: refs/tags/1.0.0
+
+variables:
+
+extends:
+  template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
+  parameters:
+    deployFromFeature: true
+    environments:
+      - name: 'Ephemeral'
+        developmentEnvironment: True
+        useDevelopmentEnvironmentForValidationOnly: False
+        azureRegions:
+          primary: UkSouth
+        serviceConnection: AZD-CPR-DEV1
+    privateAgentName: DEFRA-COMMON-windows2022-SSV3
+    groupedDeployments:
+      - name: TestScripts
+        deployments:
+          - name: 'script 1'
+            serviceConnectionVariableName: azureResourceManagerConnection
+            isDeployToSecondaryRegions: false
+            type: script
+            scriptType: AzurePowerShell
+            inlineScript: 'Write-Host "Script 1"'
+          - name: 'script 2'
+            serviceConnectionVariableName: azureResourceManagerConnection
+            isDeployToSecondaryRegions: false
+            type: script
+            scriptType: AzurePowerShell
+            inlineScript: 'Write-Host "Script 2"'
