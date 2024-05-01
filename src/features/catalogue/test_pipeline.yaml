@@ -29,6 +29,11 @@ resources:
       type: git
       ref: feat/${{ parameters.workItemId }}
 
+variables:
+  gioRepo: $[ resources.repositories.GIO_DATA_PLATFORM.ref ]
+  targetRepoUrl: $[ resources.repositories.GIO_DATA_PLATFORM.url ]
+  accountName: $(ephemeralNamePrefix)${{ parameters.workItemId }}
+
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
   parameters:
