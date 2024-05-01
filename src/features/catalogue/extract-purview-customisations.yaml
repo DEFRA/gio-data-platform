@@ -48,7 +48,8 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: NorthEurope
+          primary: ${{ variables.location }}
+        serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
       - name: Purview_Ephemeral_Extract

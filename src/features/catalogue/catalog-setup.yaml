@@ -41,25 +41,29 @@ extends:
     environments:
       - name: 'DP_DEV'
         azureRegions:
-          primary: uksouth
+          primary: ${{ variables.location }}
         developmentEnvironment: true
         deploymentBranches:
           - '*'
+        serviceConnection: ${{ variables.azureResourceManagerConnection }}
       - name: 'DP_TST'
         azureRegions:
-          primary: uksouth
+          primary: ${{ variables.location }}
         deploymentBranches:
           - '*'    
+        serviceConnection: ${{ variables.azureResourceManagerConnection }}
       - name: 'DP_PRE'
         azureRegions:
-          primary: uksouth
+          primary: ${{ variables.location }}
         deploymentBranches:
           - '*'
+        serviceConnection: ${{ variables.azureResourceManagerConnection }}
       - name: 'DP_PRD'
         azureRegions:
-          primary: uksouth
+          primary: ${{ variables.location }}
         deploymentBranches:
           - '*'
+        serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
       - name: Purview_Deployment
