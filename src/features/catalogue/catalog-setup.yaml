@@ -72,25 +72,25 @@ extends:
            path: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
            type: script
            scriptType: AzurePowerShell
-           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/collections.json" -ImportConfigPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
+           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/collections.json" -ImportConfigPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json" -AccountName "$(PurviewDefaultName)"'
          - name: 'Configure Collection Permissions'
            serviceConnectionVariableName: azureResourceManagerConnection
            isDeployToSecondaryRegions: false
            path: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollectionPermissions.ps1'
            type: script
            scriptType: AzurePowerShell
-           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/Permissions/$(scriptEnvironment)" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'  
+           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/Permissions/$(scriptEnvironment)" -AccountName "$(PurviewDefaultName)"'  
          - name: 'Configure Classifications'
            serviceConnectionVariableName: azureResourceManagerConnection
            isDeployToSecondaryRegions: false
            path: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureClassifications.ps1'
            type: script
            scriptType: AzurePowerShell
-           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/TypeDefinitions/classifications.json" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
+           scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/TypeDefinitions/classifications.json" -AccountName "$(PurviewDefaultName)"'
       #   - name: 'Configure Glossary'
       #     serviceConnectionVariableName: azureResourceManagerConnection
       #     isDeployToSecondaryRegions: false
       #     path: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureGlossaries.ps1'
       #     type: script
       #     scriptType: AzurePowerShell
-      #     scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Glossaries" -AccountName "$(scriptEnvironment)$(parent-project)$(nc-function-application)PV$(subscriptionNumber)$(regionNumber)01"'
+      #     scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Glossaries" -AccountName "$(PurviewDefaultName)"'
