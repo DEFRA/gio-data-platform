@@ -1,0 +1,89 @@
+parameters:
+  - name: privateAgentName
+    displayName: "Agent pool name"
+    type: string
+    default: 'Agent pool name'
+  - name: primaryRegion
+    displayName: "Primary region"
+    type: string
+    default: 'NorthEurope'
+  - name: workItemId
+    displayName: "The id of the work item (This will be used in the environment name)"
+    type: string
+    default: '12345'
+
+resources:
+  repositories:
+    - repository: PipelineCommon
+      name: DEFRA/ado-pipeline-common
+      endpoint: DEFRA
+      type: github
+      ref: refs/tags/1.0.0
+    - repository: GIO_DATA_PLATFORM
+      name: GIO_DATA_PLATFORM
+      type: git
+      ref: main
+
+extends:
+  template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
+  parameters:
+    additionalRepositories:
+      -  GIO_DATA_PLATFORM
+    variableFiles:
+      - /vars/common.yaml@GIO_DATA_PLATFORM
+      - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
+    deployFromFeature: True
+    environments:
+      - name: 'Ephemeral'
+        developmentEnvironment: True
+        useDevelopmentEnvironmentForValidationOnly: False
+        azureRegions:
+          primary: ${{ parameters.primaryRegion }}
+        serviceConnection: ${{ variables.azureResourceManagerConnection }}
+    privateAgentName: ${{ parameters.privateAgentName }}
+    groupedDeployments:
+      - name: Purview_Ephemeral_infra
+        deployments:
+          - name: purview
+            serviceConnectionVariableName: azureResourceManagerConnection
+            isDeployToSecondaryRegions: false
+            path: src/features/catalogue/infra
+            type: bicep
+            parameterFilePath: src/features/catalogue/infra
+            scope: "Resource Group"
+            resourceGroupName: $(resourceGroup)
+            preDeployScriptsList:
+              - displayName: Set the environment name
+                type: AzurePowerShell
+                inlineScript: |
+                  $resourceName =  "$(ephemeralNamePrefix)${{ parameters.workItemId }}"
+                  Write-Host "Resource Name $resourceName"
+                  Write-Host "##vso[task.setvariable variable=ephemeralNamePrefix;]$resourceName"
+            postDeployScriptsList:
+              - displayName: Add Permission to ephemeral Group
+                type: AzurePowerShell
+                inlineScript: |
+                  Write-Host $(ephemeralNamePrefix)
+                  Install-Module -Name Az.Purview -RequiredVersion "0.2.0" -Force
+                  Import-Module -Name Az.Purview
+                  Add-AzPurviewAccountRootCollectionAdmin -AccountName $(ephemeralNamePrefix) -ResourceGroupName $(resourceGroup) -ObjectId $(adminGroupId)
+              - displayName: 'Configure Collections'
+                scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
+                type: AzurePowerShell
+                scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/collections.json" -ImportConfigPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json" -AccountName $(ephemeralNamePrefix)'
+              - displayName: 'Configure Classifications'
+                scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureClassifications.ps1'
+                type: AzurePowerShell
+                scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/TypeDefinitions/classifications.json" -AccountName $(ephemeralNamePrefix)'
+              - displayName: Display Url to User
+                type: AzurePowerShell
+                inlineScript: |
+                  Write-Host "Your ephemeral Url is https://web.purview.azure.com/resource/$(ephemeralNamePrefix)?feature.tenant=c9d74090-b4e6-4b04-981d-e6757a160812"
+              - displayName: 'Create Repo for ephemeral work item'
+                type: AzurePowerShell
+                inlineScript: |
+                  cd "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM"
+                  git fetch origin
+                  git checkout main
+                  git checkout -b feat/${{ parameters.workItemId }}
+                  git -c http.extraheader="AUTHORIZATION: bearer $(System.AccessToken)" push origin --set-upstream feat/${{ parameters.workItemId }}
