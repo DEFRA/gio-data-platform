@@ -9,7 +9,13 @@ parameters:
     displayName: "Primary region"
     type: string
     default: 'NorthEurope'
-
+  - name: environments
+    type: object
+    default:
+      - 'DP_DEV'
+      - 'DP_TST'
+      - 'DP_PRE'
+      - 'DP_PRD'
 trigger:
   batch: true
   branches:
@@ -43,31 +49,15 @@ extends:
       - /vars/common.yaml@GIO_DATA_PLATFORM
       - /vars/{environment}.yaml@GIO_DATA_PLATFORM
     environments:
-      - name: 'DP_DEV'
-        azureRegions:
-          primary: ${{ parameters.primaryRegion }}
-        developmentEnvironment: true
-        deploymentBranches:
-          - '*'
-        serviceConnection: ${{ variables.azureResourceManagerConnection }}
-      - name: 'DP_TST'
-        azureRegions:
-          primary: ${{ parameters.primaryRegion }}
-        deploymentBranches:
-          - '*'    
-        serviceConnection: ${{ variables.azureResourceManagerConnection }}
-      - name: 'DP_PRE'
+      - ${{ each env in parameters.environments }}:
+        - name: ${{ upper(env) }}
         azureRegions:
           primary: ${{ parameters.primaryRegion }}
         deploymentBranches:
           - '*'
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
-      - name: 'DP_PRD'
-        azureRegions:
-          primary: ${{ parameters.primaryRegion }}
-        deploymentBranches:
-          - '*'
-        serviceConnection: ${{ variables.azureResourceManagerConnection }}
+        ${{ if in(upper(env), 'DEV') }}:
+          developmentEnvironment: True
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
       - name: Purview_Deployment
