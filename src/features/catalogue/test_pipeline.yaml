@@ -1,7 +1,5 @@
 name: $(BuildID)
 
-parameters:
-
 trigger: none
 pr: none
 
@@ -12,12 +10,19 @@ resources:
       endpoint: DEFRA
       type: github
       ref: refs/tags/1.0.0
-
-variables:
+    - repository: GIO_DATA_PLATFORM
+      name: DEFRA-Common-Platform-Improvements/GIO_DATA_PLATFORM
+      type: git
+      ref: main
 
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
   parameters:
+    additionalRepositories:
+      -  GIO_DATA_PLATFORM
+    variableFiles:
+      - /vars/common.yaml@GIO_DATA_PLATFORM
+      - /src/config/catalogue/vars/ephemeral.yaml@GIO_DATA_PLATFORM
     deployFromFeature: true
     environments:
       - name: 'Ephemeral'
@@ -35,10 +40,12 @@ extends:
             isDeployToSecondaryRegions: false
             type: script
             scriptType: AzurePowerShell
-            inlineScript: 'Write-Host "Script 1"'
+            inlineScript: |
+                    Write-Host "Script 1"
           - name: 'script 2'
             serviceConnectionVariableName: azureResourceManagerConnection
             isDeployToSecondaryRegions: false
             type: script
             scriptType: AzurePowerShell
-            inlineScript: 'Write-Host "Script 2"'
+            inlineScript: |
+                    Write-Host "Script 2"
