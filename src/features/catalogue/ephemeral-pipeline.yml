@@ -29,6 +29,9 @@ resources:
       type: git
       ref: main
 
+variables:
+  accountName: $(ephemeralNamePrefix)${{ parameters.workItemId }}
+
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
   parameters:
@@ -57,33 +60,26 @@ extends:
             parameterFilePath: src/features/catalogue/infra
             scope: "Resource Group"
             resourceGroupName: $(resourceGroup)
-            preDeployScriptsList:
-              - displayName: Set the environment name
-                type: AzurePowerShell
-                inlineScript: |
-                  $resourceName =  "$(ephemeralNamePrefix)${{ parameters.workItemId }}"
-                  Write-Host "Resource Name $resourceName"
-                  Write-Host "##vso[task.setvariable variable=ephemeralNamePrefix;]$resourceName"
             postDeployScriptsList:
               - displayName: Add Permission to ephemeral Group
                 type: AzurePowerShell
                 inlineScript: |
-                  Write-Host $(ephemeralNamePrefix)
+                  Write-Host $(accountName)
                   Install-Module -Name Az.Purview -RequiredVersion "0.2.0" -Force
                   Import-Module -Name Az.Purview
-                  Add-AzPurviewAccountRootCollectionAdmin -AccountName $(ephemeralNamePrefix) -ResourceGroupName $(resourceGroup) -ObjectId $(adminGroupId)
+                  Add-AzPurviewAccountRootCollectionAdmin -AccountName $(accountName) -ResourceGroupName $(resourceGroup) -ObjectId $(adminGroupId)
               - displayName: 'Configure Collections'
                 scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureCollections.ps1'
                 type: AzurePowerShell
-                scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/collections.json" -ImportConfigPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json" -AccountName $(ephemeralNamePrefix)'
+                scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/Collections/collections.json" -ImportConfigPath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/importConfig.json" -AccountName $(accountName)'
               - displayName: 'Configure Classifications'
                 scriptPath: 'src/infrastructure/scripts/PowerShell/Scripts/Purview/ConfigureClassifications.ps1'
                 type: AzurePowerShell
-                scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/TypeDefinitions/classifications.json" -AccountName $(ephemeralNamePrefix)'
+                scriptArguments: '-ConfigFilePath "$(Build.SourcesDirectory)/GIO_DATA_PLATFORM/src/config/catalogue/Extract/TypeDefinitions/classifications.json" -AccountName $(accountName)'
               - displayName: Display Url to User
                 type: AzurePowerShell
                 inlineScript: |
-                  Write-Host "Your ephemeral Url is https://web.purview.azure.com/resource/$(ephemeralNamePrefix)?feature.tenant=c9d74090-b4e6-4b04-981d-e6757a160812"
+                  Write-Host "Your ephemeral Url is https://web.purview.azure.com/resource/$(accountName)?feature.tenant=$(tenantId)"
               - displayName: 'Create Repo for ephemeral work item'
                 type: AzurePowerShell
                 inlineScript: |
