@@ -8,7 +8,7 @@ parameters:
   - name: primaryRegion
     displayName: "Primary region"
     type: string
-    default: 'NorthEurope'
+    default: 'WestEurope'
   - name: deleteEphemeral
     displayName: " Delete Ephemeral Env after extract"
     type: boolean

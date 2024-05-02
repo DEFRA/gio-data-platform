@@ -26,8 +26,14 @@ foreach ($file in $jsonFiles)
           Write-Host "Attempting to Update the Classification"
           Update-TypeDefinitions -BaseUri $baseUrl -templateDefinition $items -Verb "PUT"
         }
-        catch [System.Net.WebException] #Not found
+        catch
         {
+          Write-Host "Failing to Update the Classification, Error Details:"
+          Write-Host "Error Message: $($_.Exception.Message)"
+          Write-Host "Error Category Info: $($_.CategoryInfo.ToString())"
+          Write-Host "Error Id: $($_.FullyQualifiedErrorId)"
+          Write-Host "Error PositionMessage: $($_.InvocationInfo.PositionMessage)"
+
           Write-Host "Attempting to create the Classification"
           Update-TypeDefinitions -BaseUri $baseUrl -templateDefinition $items -Verb "POST"
         }         
