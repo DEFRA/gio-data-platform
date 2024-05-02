@@ -29,7 +29,7 @@ foreach ($file in $jsonFiles)
         catch
         {
           Write-Host "Failing to Update the Classification, Error Details:"
-          Write-Host "Error Message: $($_.ErrorDetails.Message)"
+          Write-Host "Error Message: $($_.Exception.Message)"
           Write-Host "Error Category Info: $($_.CategoryInfo.ToString())"
           Write-Host "Error Id: $($_.FullyQualifiedErrorId)"
           Write-Host "Error PositionMessage: $($_.InvocationInfo.PositionMessage)"
