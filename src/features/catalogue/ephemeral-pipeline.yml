@@ -29,6 +29,9 @@ resources:
       type: git
       ref: main
 
+variables:
+  ephemeralNamePrefix: "$(ephemeralNamePrefix)${{ parameters.workItemId }}"
+
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
   parameters:
@@ -57,13 +60,6 @@ extends:
             parameterFilePath: src/features/catalogue/infra
             scope: "Resource Group"
             resourceGroupName: $(resourceGroup)
-            preDeployScriptsList:
-              - displayName: Set the environment name
-                type: AzurePowerShell
-                inlineScript: |
-                  $resourceName =  "$(ephemeralNamePrefix)${{ parameters.workItemId }}"
-                  Write-Host "Resource Name $resourceName"
-                  Write-Host "##vso[task.setvariable variable=ephemeralNamePrefix;]$resourceName"
             postDeployScriptsList:
               - displayName: Add Permission to ephemeral Group
                 type: AzurePowerShell
