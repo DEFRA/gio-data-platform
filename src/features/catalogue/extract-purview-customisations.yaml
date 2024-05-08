@@ -27,7 +27,7 @@ resources:
       name: DEFRA/ado-pipeline-common
       endpoint: DEFRA
       type: github
-      ref: refs/tags/1.0.0
+      ref: feat/smallImprovements
     - repository: GIO_DATA_PLATFORM
       name: GIO_DATA_PLATFORM
       type: git
