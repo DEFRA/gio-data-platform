@@ -6,7 +6,7 @@ parameters:
     type: string
     default: '$(privateAgentName)'
   - name: primaryRegion
-    displayName: "Agent pool name"
+    displayName: "Primary Region"
     type: string
     default: 'WestEurope'
   - name: deleteEphemeral
