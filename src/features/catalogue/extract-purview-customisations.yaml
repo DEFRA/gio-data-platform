@@ -6,7 +6,7 @@ parameters:
     type: string
     default: '$(privateAgentName)'
   - name: primaryRegion
-    displayName: "Primary Region"
+    displayName: "Primary region"
     type: string
     default: 'WestEurope'
   - name: deleteEphemeral
