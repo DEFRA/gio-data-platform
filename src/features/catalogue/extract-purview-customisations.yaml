@@ -5,6 +5,10 @@ parameters:
     displayName: "Agent pool name"
     type: string
     default: '$(privateAgentName)'
+  - name: primaryRegion
+    displayName: "Agent pool name"
+    type: string
+    default: 'WestEurope'
   - name: deleteEphemeral
     displayName: " Delete Ephemeral Env after extract"
     type: boolean
@@ -13,6 +17,7 @@ parameters:
     displayName: "Work Item Id"
     type: string
     default: '12345'
+
 
 trigger: none
 pr: none
@@ -33,6 +38,7 @@ variables:
   gioRepo: $[ resources.repositories.GIO_DATA_PLATFORM.ref ]
   targetRepoUrl: $[ resources.repositories.GIO_DATA_PLATFORM.url ]
   accountName: $(ephemeralNamePrefix)${{ parameters.workItemId }}
+  primaryRegion: '${{ coalesce(variables.defaultRegion, parameters.primaryRegion) }}'
 
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
@@ -48,7 +54,7 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: ${{ coalesce(variables['primaryRegion'], 'WestEurope') }} 
+          primary: ${{ variables.primaryRegion }} 
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
