@@ -82,7 +82,7 @@ if($true -eq $exportConfig.TypeDefs.IgnoreSystemGeneratedFields)
     }
 
     # Update $typeDefinitions.classificationDefs with the filtered array
-    $classifications.classificationDefs = $filteredTypeDefinitions
+    $classifications.classificationDefs = $filteredTypeDefinitions | Sort-Object -Property name
 }
 
 Out-FileWithDirectory -FilePath $FolderPath\TypeDefinitions\classifications.json -Encoding UTF8 -Content $classifications -ConvertToJson
