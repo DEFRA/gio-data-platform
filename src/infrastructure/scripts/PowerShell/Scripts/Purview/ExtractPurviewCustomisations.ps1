@@ -58,6 +58,7 @@ if($true -eq $exportConfig.Collections.IgnoreSystemGeneratedFields)
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
 $classifications = Get-TypeDefinitions -BaseUri $baseUrl -Type 'classification'
+$classifications = $classifications | Sort-Object -Property name
 
 if($true -eq $exportConfig.TypeDefs.IgnoreSystemGeneratedFields)
 {
