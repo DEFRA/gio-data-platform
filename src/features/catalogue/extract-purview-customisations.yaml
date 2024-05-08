@@ -38,8 +38,6 @@ variables:
   gioRepo: $[ resources.repositories.GIO_DATA_PLATFORM.ref ]
   targetRepoUrl: $[ resources.repositories.GIO_DATA_PLATFORM.url ]
   accountName: $(ephemeralNamePrefix)${{ parameters.workItemId }}
-  defaultRegion: 'WestEurope'
-  primaryRegion: ${{ variables.defaultRegion }}
 
 extends:
   template: templates/pipelines/common-infrastructure-deploy.yaml@PipelineCommon
@@ -55,7 +53,7 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: ${{ variables.primaryRegion }} 
+          primary: ${{ parameters.primaryRegion }} 
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
