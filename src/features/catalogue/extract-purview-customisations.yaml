@@ -48,7 +48,7 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: ${{ coalesce(variables.primaryRegion, 'WestEurope') }} 
+          primary: ${{ coalesce(variables['primaryRegion'], 'WestEurope') }} 
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
