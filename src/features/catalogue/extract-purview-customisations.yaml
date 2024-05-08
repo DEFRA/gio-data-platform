@@ -5,10 +5,6 @@ parameters:
     displayName: "Agent pool name"
     type: string
     default: '$(privateAgentName)'
-  - name: primaryRegion
-    displayName: "Primary region"
-    type: string
-    default: 'default'
   - name: deleteEphemeral
     displayName: " Delete Ephemeral Env after extract"
     type: boolean
@@ -52,7 +48,7 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: ${{ parameters.primaryRegion }}
+          primary: ${{ coalesce(variables.primaryRegion, 'WestEurope') }} 
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
