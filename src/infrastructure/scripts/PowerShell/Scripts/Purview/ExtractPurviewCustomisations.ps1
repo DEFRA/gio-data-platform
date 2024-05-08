@@ -58,7 +58,6 @@ if($true -eq $exportConfig.Collections.IgnoreSystemGeneratedFields)
 Out-FileWithDirectory -FilePath $FolderPath\Collections\collections.json -Encoding UTF8 -Content $collections.value -ConvertToJson
 
 $classifications = Get-TypeDefinitions -BaseUri $baseUrl -Type 'classification'
-$classifications = $classifications | Sort-Object -Property name
 
 if($true -eq $exportConfig.TypeDefs.IgnoreSystemGeneratedFields)
 {
@@ -83,7 +82,7 @@ if($true -eq $exportConfig.TypeDefs.IgnoreSystemGeneratedFields)
     }
 
     # Update $typeDefinitions.classificationDefs with the filtered array
-    $classifications.classificationDefs = $filteredTypeDefinitions
+    $classifications.classificationDefs = $filteredTypeDefinitions | Sort-Object -Property name
 }
 
 Out-FileWithDirectory -FilePath $FolderPath\TypeDefinitions\classifications.json -Encoding UTF8 -Content $classifications -ConvertToJson
