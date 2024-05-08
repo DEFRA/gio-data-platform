@@ -4,7 +4,7 @@ parameters:
   - name: privateAgentName
     displayName: "Agent pool name"
     type: string
-    default: 'DEFRA-COMMON-windows2022-SSV3'
+    default: '$(privateAgentName)'
   - name: primaryRegion
     displayName: "Primary region"
     type: string
