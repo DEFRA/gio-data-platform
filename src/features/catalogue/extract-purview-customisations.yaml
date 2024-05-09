@@ -4,11 +4,7 @@ parameters:
   - name: privateAgentName
     displayName: "Agent pool name"
     type: string
-    default: 'DEFRA-COMMON-windows2022-SSV3'
-  - name: primaryRegion
-    displayName: "Primary region"
-    type: string
-    default: 'WestEurope'
+    default: '$(privateAgentName)'
   - name: deleteEphemeral
     displayName: " Delete Ephemeral Env after extract"
     type: boolean
@@ -17,6 +13,7 @@ parameters:
     displayName: "Work Item Id"
     type: string
     default: '12345'
+
 
 trigger: none
 pr: none
@@ -52,7 +49,7 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: ${{ parameters.primaryRegion }}
+          primary: WestEurope 
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:

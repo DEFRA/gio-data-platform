@@ -4,11 +4,7 @@ parameters:
   - name: privateAgentName
     displayName: "Agent pool name"
     type: string
-    default: 'Azure Pipelines'
-  - name: primaryRegion
-    displayName: "Primary region"
-    type: string
-    default: 'UKSouth'
+    default: '$(privateAgentName)'
   - name: environments
     type: object
     default:
@@ -57,7 +53,7 @@ extends:
       - ${{ each env in parameters.environments }}:
         - name:  ${{ env.name }}
           azureRegions:
-            primary: ${{ parameters.primaryRegion }}
+            primary: UKSouth
           developmentEnvironment: ${{ env.developmentEnvironment }}
           deploymentBranches:
             - '*'

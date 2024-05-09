@@ -7,11 +7,7 @@ parameters:
   - name: privateAgentName
     displayName: "Agent pool name"
     type: string
-    default: 'DEFRA-COMMON-windows2022-SSV3'
-  - name: primaryRegion
-    displayName: "Primary region"
-    type: string
-    default: 'WestEurope'
+    default: '$(privateAgentName)'
   - name: workItemId
     displayName: "The id of the work item (This will be used in the environment name)"
     type: string
@@ -46,7 +42,7 @@ extends:
         developmentEnvironment: True
         useDevelopmentEnvironmentForValidationOnly: False
         azureRegions:
-          primary: ${{ parameters.primaryRegion }}
+          primary: WestEurope
         serviceConnection: ${{ variables.azureResourceManagerConnection }}
     privateAgentName: ${{ parameters.privateAgentName }}
     groupedDeployments:
